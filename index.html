@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta name="app-version" content="34">
+  <meta name="app-version" content="35">
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Foodsoft Eğitim Programı</title>
@@ -1131,32 +1134,59 @@
   </div>
 
   <script>
-    const APP_VERSION = "34";
+    const APP_VERSION = "auto-20260618-01";
+    let latestAssetVersion = APP_VERSION;
+
+    /*
+      Otomatik güncelleme sistemi:
+      - Kullanıcıya verilen ana link değişmez.
+      - Görseller her çağrıldığında cache kırılarak GitHub'daki güncel dosya alınır.
+      - version.json varsa arka planda okunur; yoksa Date.now() ile yine eski görsel tutulmaz.
+    */
+    function withVersion(path) {
+      if (!path || path.startsWith("data:")) return path;
+      const cacheBuster = latestAssetVersion + "-" + Date.now();
+      return path + (path.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(cacheBuster);
+    }
+
+    function refreshVisibleImages() {
+      if (!activeTraining) return;
+      const currentSrc = activeTraining.pages[currentPage - 1];
+      pageImage.src = withVersion(currentSrc);
+      fullscreenImage.src = withVersion(currentSrc);
+    }
 
     (function checkLatestVersion() {
       try {
-        const params = new URLSearchParams(window.location.search);
-        const currentUrlVersion = params.get("v");
-
         fetch("version.json?t=" + Date.now(), { cache: "no-store" })
           .then(response => response.ok ? response.json() : null)
           .then(data => {
             if (!data || !data.version) return;
             const latestVersion = String(data.version);
-            if (currentUrlVersion !== latestVersion) {
-              params.set("v", latestVersion);
-              const nextUrl = window.location.pathname + "?" + params.toString() + window.location.hash;
-              window.location.replace(nextUrl);
+            if (latestVersion && latestVersion !== latestAssetVersion) {
+              latestAssetVersion = latestVersion;
+              refreshVisibleImages();
             }
           })
           .catch(() => {});
       } catch (e) {}
     })();
 
-    function withVersion(path) {
-      if (!path || path.startsWith("data:")) return path;
-      return path + (path.includes("?") ? "&" : "?") + "v=" + APP_VERSION;
-    }
+    window.setInterval(() => {
+      try {
+        fetch("version.json?t=" + Date.now(), { cache: "no-store" })
+          .then(response => response.ok ? response.json() : null)
+          .then(data => {
+            if (!data || !data.version) return;
+            const latestVersion = String(data.version);
+            if (latestVersion && latestVersion !== latestAssetVersion) {
+              latestAssetVersion = latestVersion;
+              refreshVisibleImages();
+            }
+          })
+          .catch(() => {});
+      } catch (e) {}
+    }, 60000);
 
     const trainings = [{'id': 'depo-sayimi', 'title': 'Depo Sayımı Oluşturma', 'subtitle': "Foodsoft'ta depo sayımı oluşturma rehberi", 'pages': ['trainings/depo-sayimi/page-1.png', 'trainings/depo-sayimi/page-2.png', 'trainings/depo-sayimi/page-3.png', 'trainings/depo-sayimi/page-4.png', 'trainings/depo-sayimi/page-5.png', 'trainings/depo-sayimi/page-6.png']}, {'id': 'talep-acma', 'title': 'Talep Açma', 'subtitle': "Foodsoft'ta talep açma işlemleri rehberi", 'pages': ['trainings/talep-acma/page-1.png', 'trainings/talep-acma/page-2.png', 'trainings/talep-acma/page-3.png', 'trainings/talep-acma/page-4.png', 'trainings/talep-acma/page-5.png']}, {'id': 'irsaliye-isleme', 'title': 'İrsaliye İşleme', 'subtitle': "Foodsoft'ta irsaliye işleme rehberi", 'pages': ['trainings/irsaliye-isleme/page-1.png', 'trainings/irsaliye-isleme/page-2.png', 'trainings/irsaliye-isleme/page-3.png', 'trainings/irsaliye-isleme/page-4.png', 'trainings/irsaliye-isleme/page-5.png', 'trainings/irsaliye-isleme/page-6.png', 'trainings/irsaliye-isleme/page-7.png']}];
 
