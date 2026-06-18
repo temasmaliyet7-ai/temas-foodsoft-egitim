@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta name="app-version" content="28">
+  <meta name="app-version" content="34">
   <meta charset="UTF-8">
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -63,7 +63,7 @@
       content: "";
       position: fixed;
       inset: 0;
-      background-image: url("assets/background-logo.png?v=28");
+      background-image: url("assets/background-logo.png?v=34");
       background-repeat: no-repeat;
       background-position: center center;
       background-size: min(62vw, 430px);
@@ -350,7 +350,7 @@
 
     .fullscreen-close {
       position: fixed;
-      top: max(12px, env(safe-area-inset-top));
+      bottom: max(12px, env(safe-area-inset-bottom));
       right: max(12px, env(safe-area-inset-right));
       width: 46px;
       height: 46px;
@@ -391,6 +391,17 @@
     .fullscreen-tap-zone.left { left: 0; }
     .fullscreen-tap-zone.right { right: 0; }
     .fullscreen-tap-zone:active { background: rgba(49,183,230,.035); }
+
+    @media (orientation: portrait) {
+      .fullscreen-img.rotate-mobile {
+        width: 100vh;
+        height: 100vw;
+        max-width: none;
+        max-height: none;
+        transform: rotate(90deg);
+        transform-origin: center center;
+      }
+    }
 
     @media (max-width: 768px) {
       body { padding: 8px; }
@@ -782,6 +793,18 @@
       animation: swipeHintFade 3.3s ease forwards;
     }
 
+    .swipe-hint.fullscreen-mode {
+      z-index: 10007;
+    }
+
+    @media (orientation: portrait) {
+      .swipe-hint.fullscreen-mode .swipe-hint-card {
+        transform: rotate(90deg);
+        transform-origin: center center;
+        width: min(78vh, 560px);
+      }
+    }
+
     .swipe-hint-card {
       width: min(90vw, 620px);
       min-height: 0;
@@ -1036,7 +1059,7 @@
       </div>
 
       <div class="right-logo-box" aria-label="Temaş Logo">
-        <img class="right-logo" src="assets/temas-right-logo.png?v=28" alt="Temaş Logo">
+        <img class="right-logo" src="assets/temas-right-logo.png?v=34" alt="Temaş Logo">
       </div>
     </header>
 
@@ -1083,7 +1106,7 @@
   </main>
 
   <div class="fullscreen-viewer" id="fullscreenViewer" aria-label="Tam ekran belge görüntüleyici">
-    <img id="fullscreenImage" class="fullscreen-img" src="" alt="Tam ekran eğitim sayfası" draggable="false">
+    <img id="fullscreenImage" class="fullscreen-img rotate-mobile" src="" alt="Tam ekran eğitim sayfası" draggable="false">
     <button class="fullscreen-close" id="fullscreenClose" type="button" aria-label="Tam ekranı kapat">×</button>
     <button class="fullscreen-tap-zone left" id="fullscreenPrev" type="button" aria-label="Önceki sayfa"></button>
     <button class="fullscreen-tap-zone right" id="fullscreenNext" type="button" aria-label="Sonraki sayfa"></button>
@@ -1099,7 +1122,7 @@
       <div class="swipe-hint-icons">
         <span class="swipe-arrow left" aria-hidden="true"></span>
         <span class="swipe-hand" aria-hidden="true">
-          <img src="assets/swipe-hand-user.png?v=28" alt="" draggable="false">
+          <img src="assets/swipe-hand-user.png?v=34" alt="" draggable="false">
         </span>
         <span class="swipe-arrow right" aria-hidden="true"></span>
       </div>
@@ -1108,7 +1131,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "28";
+    const APP_VERSION = "34";
 
     (function checkLatestVersion() {
       try {
@@ -1214,7 +1237,7 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
       window.clearTimeout(selectTraining.hintTimer);
       selectTraining.hintTimer = window.setTimeout(() => {
-        showSwipeHint();
+        showSwipeHint(false);
       }, 180);
     }
 
@@ -1262,14 +1285,15 @@
     fullscreenPrevBtn.addEventListener("click", () => goPage(-1));
     fullscreenNextBtn.addEventListener("click", () => goPage(1));
 
-    function showSwipeHint() {
+    function showSwipeHint(isFullscreen = false) {
       if (!swipeHint) return;
-      swipeHint.classList.remove("show");
+      swipeHint.classList.remove("show", "fullscreen-mode");
+      if (isFullscreen) swipeHint.classList.add("fullscreen-mode");
       void swipeHint.offsetWidth;
       swipeHint.classList.add("show");
       window.clearTimeout(showSwipeHint.timer);
       showSwipeHint.timer = window.setTimeout(() => {
-        swipeHint.classList.remove("show");
+        swipeHint.classList.remove("show", "fullscreen-mode");
       }, 3300);
     }
 
@@ -1280,13 +1304,13 @@
       fullscreenPageInfo.textContent = currentPage + " / " + activeTraining.pages.length;
       fullscreenViewer.classList.add("open");
       document.body.classList.add("fullscreen-locked");
-      showSwipeHint();
+      showSwipeHint(true);
     }
 
     function closeFullscreen() {
       fullscreenViewer.classList.remove("open");
       document.body.classList.remove("fullscreen-locked");
-      if (swipeHint) swipeHint.classList.remove("show");
+      if (swipeHint) swipeHint.classList.remove("show", "fullscreen-mode");
       window.clearTimeout(showSwipeHint.timer);
     }
 
@@ -1299,7 +1323,7 @@
       home.style.display = "grid";
       activeTraining = null;
       updateMenuActive();
-      if (swipeHint) swipeHint.classList.remove("show");
+      if (swipeHint) swipeHint.classList.remove("show", "fullscreen-mode");
       window.clearTimeout(showSwipeHint.timer);
       window.clearTimeout(selectTraining.hintTimer);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1460,7 +1484,11 @@
       const opacity = 1 - Math.min(Math.abs(moveY) / limit, 1) * .10;
 
       fullscreenImage.classList.add("swiping");
-      fullscreenImage.style.transform = `translateX(${moveX}px) scale(.994)`;
+      if (window.matchMedia("(orientation: portrait)").matches) {
+        fullscreenImage.style.transform = `rotate(90deg) translateX(${moveX}px) scale(.994)`;
+      } else {
+        fullscreenImage.style.transform = `translateX(${moveX}px) scale(.994)`;
+      }
       fullscreenImage.style.opacity = opacity;
     }
 
