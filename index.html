@@ -558,6 +558,266 @@
       pointer-events: auto !important;
     }
 
+
+
+    /* V11 yerleşim + sürükleme düzeltmesi */
+    .viewer-actions {
+      align-items: center !important;
+    }
+
+    .viewer-box {
+      position: relative !important;
+      overflow: visible !important;
+      padding: 8px !important;
+    }
+
+    .stage {
+      min-height: calc(100vh - 292px) !important;
+      touch-action: pan-y !important;
+      cursor: grab !important;
+    }
+
+    .stage:active { cursor: grabbing !important; }
+
+    .page-img {
+      height: calc(100vh - 312px) !important;
+    }
+
+    .stage-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin: 0 0 8px 0;
+      padding: 0 4px;
+    }
+
+    .stage-fullscreen-btn {
+      position: static;
+      z-index: 7;
+      height: 34px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(49,183,230,.24);
+      border-radius: 999px;
+      background: rgba(255,255,255,.78);
+      color: var(--accent-dark);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(19,118,158,.12);
+      backdrop-filter: blur(10px);
+      opacity: .84;
+      transition: opacity .12s ease, transform .12s ease, background .12s ease;
+    }
+
+    .stage-fullscreen-btn:hover {
+      opacity: 1;
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.92);
+    }
+
+    .stage-fullscreen-icon {
+      width: 15px;
+      height: 15px;
+      position: relative;
+      display: inline-block;
+      flex: 0 0 auto;
+    }
+
+    .stage-fullscreen-icon::before,
+    .stage-fullscreen-icon::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 2px solid currentColor;
+      border-radius: 3px;
+    }
+
+    .stage-fullscreen-icon::before {
+      clip-path: polygon(0 0, 45% 0, 45% 18%, 18% 18%, 18% 45%, 0 45%, 0 0, 55% 0, 100% 0, 100% 45%, 82% 45%, 82% 18%, 55% 18%);
+    }
+
+    .stage-fullscreen-icon::after {
+      clip-path: polygon(0 55%, 18% 55%, 18% 82%, 45% 82%, 45% 100%, 0 100%, 0 55%, 55% 82%, 82% 82%, 82% 55%, 100% 55%, 100% 100%, 55% 100%);
+    }
+
+    .fullscreen-btn {
+      display: none !important;
+    }
+
+    .tap-zone,
+    .fullscreen-tap-zone {
+      display: none !important;
+      pointer-events: none !important;
+    }
+
+    .controls {
+      margin-top: 8px !important;
+      padding: 4px 2px !important;
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      display: grid !important;
+      grid-template-columns: 1fr auto 1fr !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+
+    .nav-btn {
+      min-width: 0 !important;
+      width: min(150px, 100%) !important;
+      height: 38px !important;
+      min-height: 38px !important;
+      padding: 0 12px !important;
+      justify-self: start !important;
+      color: var(--accent-dark) !important;
+      background: rgba(255,255,255,.48) !important;
+      border: 1px solid rgba(49,183,230,.22) !important;
+      box-shadow: 0 8px 18px rgba(19,118,158,.08) !important;
+      opacity: .68 !important;
+    }
+
+    #nextBtn {
+      justify-self: end !important;
+    }
+
+    .nav-btn:hover {
+      opacity: .9 !important;
+      background: rgba(255,255,255,.72) !important;
+    }
+
+    .nav-btn:disabled {
+      opacity: .28 !important;
+      cursor: not-allowed !important;
+    }
+
+    .page-pill {
+      min-width: 72px !important;
+      height: 34px !important;
+      padding: 0 12px !important;
+      font-size: 13px !important;
+      background: rgba(255,255,255,.62) !important;
+      opacity: .72 !important;
+      box-shadow: 0 8px 18px rgba(19,118,158,.06) !important;
+    }
+
+    .fullscreen-viewer {
+      touch-action: pan-y !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+    }
+
+    .fullscreen-img,
+    .page-img {
+      -webkit-user-drag: none !important;
+      user-select: none !important;
+      touch-action: pan-y !important;
+    }
+
+    .fullscreen-nav {
+      position: fixed;
+      left: max(12px, env(safe-area-inset-left));
+      right: max(12px, env(safe-area-inset-right));
+      bottom: max(12px, env(safe-area-inset-bottom));
+      z-index: 10004;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .fullscreen-nav-btn {
+      height: 38px;
+      min-width: 0;
+      width: min(145px, 100%);
+      border-radius: 999px;
+      border: 1px solid rgba(49,183,230,.20);
+      background: rgba(255,255,255,.74);
+      color: var(--accent-dark);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      opacity: .7;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,.12);
+      backdrop-filter: blur(10px);
+    }
+
+    .fullscreen-nav-btn:hover { opacity: .95; }
+    .fullscreen-nav-btn:disabled { opacity: .28; cursor: not-allowed; }
+    #fullscreenNextBtn { justify-self: end; }
+    #fullscreenPrevBtn { justify-self: start; }
+
+    .fullscreen-page-pill {
+      position: static !important;
+      transform: none !important;
+      min-width: 72px !important;
+      height: 34px !important;
+      background: rgba(255,255,255,.72) !important;
+      opacity: .8 !important;
+    }
+
+    .fullscreen-viewer.open .fullscreen-nav {
+      display: none !important;
+    }
+
+    @media (max-width: 768px) {
+      .viewer-head {
+        align-items: center !important;
+      }
+
+      .viewer-actions {
+        flex-direction: row !important;
+        align-items: center !important;
+      }
+
+      .stage {
+        min-height: calc(100vh - 258px) !important;
+      }
+
+      .page-img {
+        height: calc(100vh - 278px) !important;
+      }
+
+      .stage-toolbar {
+        margin-bottom: 6px;
+        padding: 0 2px;
+      }
+
+      .stage-fullscreen-btn {
+        height: 31px;
+        padding: 0 8px;
+        font-size: 10px;
+        gap: 5px;
+      }
+
+      .stage-fullscreen-icon {
+        width: 13px;
+        height: 13px;
+      }
+
+      .controls {
+        margin-top: 6px !important;
+      }
+
+      .nav-btn {
+        height: 34px !important;
+        min-height: 34px !important;
+        font-size: 12px !important;
+      }
+
+      .page-pill {
+        height: 31px !important;
+        min-width: 62px !important;
+        font-size: 12px !important;
+      }
+    }
+
   </style>
 </head>
 
@@ -611,8 +871,15 @@
       </div>
 
       <div class="viewer-box">
+        <div class="stage-toolbar">
+          <button class="stage-fullscreen-btn" id="stageFullscreenBtn" type="button" aria-label="Tam ekran aç">
+            <span class="stage-fullscreen-icon" aria-hidden="true"></span>
+            <span>Tam Ekran</span>
+          </button>
+        </div>
+
         <div class="stage" id="stage">
-          <img id="pageImage" class="page-img" src="" alt="Eğitim sayfası">
+          <img id="pageImage" class="page-img" src="" alt="Eğitim sayfası" draggable="false">
           <button class="tap-zone left" id="stagePrev" type="button" aria-label="Önceki sayfa"></button>
           <button class="tap-zone right" id="stageNext" type="button" aria-label="Sonraki sayfa"></button>
         </div>
@@ -627,11 +894,15 @@
   </main>
 
   <div class="fullscreen-viewer" id="fullscreenViewer" aria-label="Tam ekran belge görüntüleyici">
-    <img id="fullscreenImage" class="fullscreen-img rotate-mobile" src="" alt="Tam ekran eğitim sayfası">
+    <img id="fullscreenImage" class="fullscreen-img rotate-mobile" src="" alt="Tam ekran eğitim sayfası" draggable="false">
     <button class="fullscreen-close" id="fullscreenClose" type="button" aria-label="Tam ekranı kapat">×</button>
     <button class="fullscreen-tap-zone left" id="fullscreenPrev" type="button" aria-label="Önceki sayfa"></button>
     <button class="fullscreen-tap-zone right" id="fullscreenNext" type="button" aria-label="Sonraki sayfa"></button>
-    <div class="fullscreen-page-pill" id="fullscreenPageInfo">1 / 1</div>
+    <div class="fullscreen-nav">
+      <button id="fullscreenPrevBtn" class="fullscreen-nav-btn" type="button">← Önceki</button>
+      <div class="fullscreen-page-pill" id="fullscreenPageInfo">1 / 1</div>
+      <button id="fullscreenNextBtn" class="fullscreen-nav-btn" type="button">Sonraki →</button>
+    </div>
   </div>
 
   <script>
@@ -655,12 +926,15 @@
     const stagePrev = document.getElementById("stagePrev");
     const stageNext = document.getElementById("stageNext");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const stageFullscreenBtn = document.getElementById("stageFullscreenBtn");
     const fullscreenViewer = document.getElementById("fullscreenViewer");
     const fullscreenImage = document.getElementById("fullscreenImage");
     const fullscreenClose = document.getElementById("fullscreenClose");
     const fullscreenPrev = document.getElementById("fullscreenPrev");
     const fullscreenNext = document.getElementById("fullscreenNext");
     const fullscreenPageInfo = document.getElementById("fullscreenPageInfo");
+    const fullscreenPrevBtn = document.getElementById("fullscreenPrevBtn");
+    const fullscreenNextBtn = document.getElementById("fullscreenNextBtn");
 
     let activeTraining = null;
     let currentPage = 1;
@@ -721,8 +995,12 @@
         fullscreenPageInfo.textContent = currentPage + " / " + activeTraining.pages.length;
         fullscreenImage.src = activeTraining.pages[currentPage - 1];
         fullscreenImage.alt = activeTraining.title + " - Sayfa " + currentPage;
-        prevBtn.disabled = currentPage === 1;
-        nextBtn.disabled = currentPage === activeTraining.pages.length;
+        const isFirstPage = currentPage === 1;
+        const isLastPage = currentPage === activeTraining.pages.length;
+        prevBtn.disabled = isFirstPage;
+        nextBtn.disabled = isLastPage;
+        fullscreenPrevBtn.disabled = isFirstPage;
+        fullscreenNextBtn.disabled = isLastPage;
       }, 90);
     }
 
@@ -740,10 +1018,8 @@
 
     prevBtn.addEventListener("click", () => goPage(-1));
     nextBtn.addEventListener("click", () => goPage(1));
-    stagePrev.addEventListener("click", () => goPage(-1));
-    stageNext.addEventListener("click", () => goPage(1));
-    fullscreenPrev.addEventListener("click", () => goPage(-1));
-    fullscreenNext.addEventListener("click", () => goPage(1));
+    fullscreenPrevBtn.addEventListener("click", () => goPage(-1));
+    fullscreenNextBtn.addEventListener("click", () => goPage(1));
 
     function openFullscreen() {
       if (!activeTraining) return;
@@ -760,6 +1036,7 @@
     }
 
     fullscreenBtn.addEventListener("click", openFullscreen);
+    stageFullscreenBtn.addEventListener("click", openFullscreen);
     fullscreenClose.addEventListener("click", closeFullscreen);
 
     backHome.addEventListener("click", () => {
@@ -778,6 +1055,134 @@
       if (e.key === "ArrowLeft") goPage(-1);
       if (e.key === "ArrowRight") goPage(1);
     });
+
+
+
+    function addSwipeNavigation(target, options = {}) {
+      const minDistance = options.minDistance ?? 42;
+      const lockThreshold = options.lockThreshold ?? 10;
+      const ratio = options.ratio ?? 1.15;
+      const onSwipeLeft = options.onSwipeLeft ?? (() => goPage(1));
+      const onSwipeRight = options.onSwipeRight ?? (() => goPage(-1));
+
+      const state = {
+        tracking: false,
+        pointerId: null,
+        startX: 0,
+        startY: 0,
+        lastX: 0,
+        lastY: 0,
+        axisLocked: null,
+        startTime: 0
+      };
+
+      function reset() {
+        state.tracking = false;
+        state.pointerId = null;
+        state.axisLocked = null;
+      }
+
+      function begin(x, y, pointerId = null) {
+        state.tracking = true;
+        state.pointerId = pointerId;
+        state.startX = x;
+        state.startY = y;
+        state.lastX = x;
+        state.lastY = y;
+        state.axisLocked = null;
+        state.startTime = Date.now();
+      }
+
+      function move(x, y) {
+        if (!state.tracking) return false;
+        state.lastX = x;
+        state.lastY = y;
+
+        const diffX = x - state.startX;
+        const diffY = y - state.startY;
+        const absX = Math.abs(diffX);
+        const absY = Math.abs(diffY);
+
+        if (!state.axisLocked) {
+          if (absX < lockThreshold && absY < lockThreshold) {
+            return false;
+          }
+          state.axisLocked = absX > absY ? 'x' : 'y';
+        }
+
+        if (state.axisLocked === 'y') {
+          return false;
+        }
+
+        return true;
+      }
+
+      function finish(x = state.lastX, y = state.lastY) {
+        if (!state.tracking) return;
+
+        const diffX = x - state.startX;
+        const diffY = y - state.startY;
+        const absX = Math.abs(diffX);
+        const absY = Math.abs(diffY);
+        const elapsed = Date.now() - state.startTime;
+        const isStrongHorizontal = absX >= minDistance && absX > absY * ratio;
+        const isFastFlick = elapsed <= 320 && absX >= 24 && absX > absY * 1.05;
+
+        reset();
+
+        if (!(isStrongHorizontal || isFastFlick)) return;
+        if (diffX < 0) onSwipeLeft();
+        else onSwipeRight();
+      }
+
+      target.addEventListener('touchstart', (e) => {
+        if (!e.touches || e.touches.length !== 1) return;
+        const t = e.touches[0];
+        begin(t.clientX, t.clientY, 'touch');
+      }, { passive: true });
+
+      target.addEventListener('touchmove', (e) => {
+        if (!state.tracking || !e.touches || e.touches.length !== 1) return;
+        const t = e.touches[0];
+        const isHorizontal = move(t.clientX, t.clientY);
+        if (isHorizontal) e.preventDefault();
+      }, { passive: false });
+
+      target.addEventListener('touchend', (e) => {
+        if (!e.changedTouches || !e.changedTouches.length) return;
+        const t = e.changedTouches[0];
+        finish(t.clientX, t.clientY);
+      }, { passive: true });
+
+      target.addEventListener('touchcancel', reset, { passive: true });
+
+      target.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch') return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        begin(e.clientX, e.clientY, e.pointerId);
+      });
+
+      target.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'touch') return;
+        if (!state.tracking || (state.pointerId !== null && e.pointerId !== state.pointerId)) return;
+        const isHorizontal = move(e.clientX, e.clientY);
+        if (isHorizontal) e.preventDefault();
+      });
+
+      target.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') return;
+        if (state.pointerId !== null && e.pointerId !== state.pointerId) return;
+        finish(e.clientX, e.clientY);
+      });
+
+      target.addEventListener('pointercancel', reset);
+      target.addEventListener('mouseleave', () => {
+        if (state.tracking && state.pointerId === null) reset();
+      });
+    }
+
+    addSwipeNavigation(document.getElementById("stage"));
+    addSwipeNavigation(fullscreenViewer);
 
     renderMenu();
   </script>
