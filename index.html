@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+  <meta name="app-version" content="28">
   <meta charset="UTF-8">
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,7 +63,7 @@
       content: "";
       position: fixed;
       inset: 0;
-      background-image: url("assets/background-logo.png");
+      background-image: url("assets/background-logo.png?v=28");
       background-repeat: no-repeat;
       background-position: center center;
       background-size: min(62vw, 430px);
@@ -1035,7 +1036,7 @@
       </div>
 
       <div class="right-logo-box" aria-label="Temaş Logo">
-        <img class="right-logo" src="assets/temas-right-logo.png" alt="Temaş Logo">
+        <img class="right-logo" src="assets/temas-right-logo.png?v=28" alt="Temaş Logo">
       </div>
     </header>
 
@@ -1098,7 +1099,7 @@
       <div class="swipe-hint-icons">
         <span class="swipe-arrow left" aria-hidden="true"></span>
         <span class="swipe-hand" aria-hidden="true">
-          <img src="assets/swipe-hand-user.png" alt="" draggable="false">
+          <img src="assets/swipe-hand-user.png?v=28" alt="" draggable="false">
         </span>
         <span class="swipe-arrow right" aria-hidden="true"></span>
       </div>
@@ -1107,6 +1108,33 @@
   </div>
 
   <script>
+    const APP_VERSION = "28";
+
+    (function checkLatestVersion() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const currentUrlVersion = params.get("v");
+
+        fetch("version.json?t=" + Date.now(), { cache: "no-store" })
+          .then(response => response.ok ? response.json() : null)
+          .then(data => {
+            if (!data || !data.version) return;
+            const latestVersion = String(data.version);
+            if (currentUrlVersion !== latestVersion) {
+              params.set("v", latestVersion);
+              const nextUrl = window.location.pathname + "?" + params.toString() + window.location.hash;
+              window.location.replace(nextUrl);
+            }
+          })
+          .catch(() => {});
+      } catch (e) {}
+    })();
+
+    function withVersion(path) {
+      if (!path || path.startsWith("data:")) return path;
+      return path + (path.includes("?") ? "&" : "?") + "v=" + APP_VERSION;
+    }
+
     const trainings = [{'id': 'depo-sayimi', 'title': 'Depo Sayımı Oluşturma', 'subtitle': "Foodsoft'ta depo sayımı oluşturma rehberi", 'pages': ['trainings/depo-sayimi/page-1.png', 'trainings/depo-sayimi/page-2.png', 'trainings/depo-sayimi/page-3.png', 'trainings/depo-sayimi/page-4.png', 'trainings/depo-sayimi/page-5.png', 'trainings/depo-sayimi/page-6.png']}, {'id': 'talep-acma', 'title': 'Talep Açma', 'subtitle': "Foodsoft'ta talep açma işlemleri rehberi", 'pages': ['trainings/talep-acma/page-1.png', 'trainings/talep-acma/page-2.png', 'trainings/talep-acma/page-3.png', 'trainings/talep-acma/page-4.png', 'trainings/talep-acma/page-5.png']}, {'id': 'irsaliye-isleme', 'title': 'İrsaliye İşleme', 'subtitle': "Foodsoft'ta irsaliye işleme rehberi", 'pages': ['trainings/irsaliye-isleme/page-1.png', 'trainings/irsaliye-isleme/page-2.png', 'trainings/irsaliye-isleme/page-3.png', 'trainings/irsaliye-isleme/page-4.png', 'trainings/irsaliye-isleme/page-5.png', 'trainings/irsaliye-isleme/page-6.png', 'trainings/irsaliye-isleme/page-7.png']}];
 
     const drawer = document.getElementById("drawer");
@@ -1197,11 +1225,11 @@
       const isFullscreenOpen = fullscreenViewer.classList.contains("open");
 
       setTimeout(() => {
-        pageImage.src = activeTraining.pages[currentPage - 1];
+        pageImage.src = withVersion(activeTraining.pages[currentPage - 1]);
         pageImage.alt = activeTraining.title + " - Sayfa " + currentPage;
         pageInfo.textContent = currentPage + " / " + activeTraining.pages.length;
         fullscreenPageInfo.textContent = currentPage + " / " + activeTraining.pages.length;
-        fullscreenImage.src = activeTraining.pages[currentPage - 1];
+        fullscreenImage.src = withVersion(activeTraining.pages[currentPage - 1]);
         fullscreenImage.alt = activeTraining.title + " - Sayfa " + currentPage;
 
         if (isFullscreenOpen) {
@@ -1247,7 +1275,7 @@
 
     function openFullscreen() {
       if (!activeTraining) return;
-      fullscreenImage.src = activeTraining.pages[currentPage - 1];
+      fullscreenImage.src = withVersion(activeTraining.pages[currentPage - 1]);
       fullscreenImage.alt = activeTraining.title + " - Sayfa " + currentPage;
       fullscreenPageInfo.textContent = currentPage + " / " + activeTraining.pages.length;
       fullscreenViewer.classList.add("open");
