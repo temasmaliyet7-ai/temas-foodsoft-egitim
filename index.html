@@ -2247,14 +2247,13 @@
 
     function getSupabaseConfig() {
       try {
-        const saved = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || "null") || {};
-        return {
-          url: normalizeProjectUrl(saved.url || DEFAULT_SUPABASE_URL),
-          key: normalizeApiKey(saved.key || DEFAULT_SUPABASE_KEY)
-        };
-      } catch (e) {
-        return { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_KEY };
-      }
+        const cfg = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || "null");
+        if (!cfg || !cfg.url || !cfg.key) return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) };
+        cfg.url = normalizeProjectUrl(cfg.url);
+        cfg.key = normalizeApiKey(cfg.key);
+        if (!cfg.url || !cfg.key) return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) };
+        return cfg;
+      } catch (e) { return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) }; }
     }
 
     function getLoginSupabaseClient() {

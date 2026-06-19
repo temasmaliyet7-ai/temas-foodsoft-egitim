@@ -631,21 +631,21 @@
     function normalizeApiKey(value) {
       return String(value || '').trim().replace(/\s+/g, '');
     }
+    function defaultConfig() {
+      return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) };
+    }
     function getConfig() {
       try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_CONFIG) || 'null') || {};
-        const url = normalizeProjectUrl(saved.url || DEFAULT_SUPABASE_URL);
-        const key = normalizeApiKey(saved.key || DEFAULT_SUPABASE_KEY);
-        return { url, key };
-      } catch {
-        return { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_KEY };
-      }
+        const cfg = JSON.parse(localStorage.getItem(STORAGE_CONFIG) || 'null');
+        if (!cfg || !cfg.url || !cfg.key) return defaultConfig();
+        cfg.url = normalizeProjectUrl(cfg.url);
+        cfg.key = normalizeApiKey(cfg.key);
+        if (!cfg.url || !cfg.key) return defaultConfig();
+        return cfg;
+      } catch { return defaultConfig(); }
     }
     function saveConfig(url, key) {
-      const cfg = {
-        url: normalizeProjectUrl(url || DEFAULT_SUPABASE_URL),
-        key: normalizeApiKey(key || DEFAULT_SUPABASE_KEY)
-      };
+      const cfg = { url: normalizeProjectUrl(url || DEFAULT_SUPABASE_URL), key: normalizeApiKey(key || DEFAULT_SUPABASE_KEY) };
       localStorage.setItem(STORAGE_CONFIG, JSON.stringify(cfg));
       return cfg;
     }
@@ -735,26 +735,25 @@
     }
 
     async function testSetupConnection() {
-      const cfg = saveConfig(el('setupUrl').value || DEFAULT_SUPABASE_URL, el('setupKey').value || DEFAULT_SUPABASE_KEY);
-      el('setupUrl').value = cfg.url;
-      el('setupKey').value = cfg.key;
-      if (!cfg.url || !cfg.key) return showToast('Project URL ve anon public key zorunlu.', 'error');
-      initClient();
+      const url = normalizeProjectUrl(el('setupUrl').value);
+      const key = normalizeApiKey(el('setupKey').value);
+      if (!url || !key) return showToast('Project URL ve anon public key zorunlu.', 'error');
       const debugBox = el('setupDebugBox');
-      if (debugBox) debugBox.textContent = 'Bağlantı test ediliyor...';
       try {
-        const ok = await rpc('admin_check', { p_admin_username: 'admin', p_admin_password: '1234' });
-        if (ok === true) {
-          if (debugBox) debugBox.textContent = '✅ Bağlantı başarılı. URL/key doğru ve admin/1234 doğrulandı.';
-          showToast('Bağlantı başarılı.');
-        } else {
-          if (debugBox) debugBox.textContent = '⚠️ Supabase bağlantısı var ama admin/1234 true dönmedi. Şifre veya admin kaydı farklı.';
-          showToast('Bağlantı var ama admin doğrulanmadı.', 'error');
+        const response = await fetch(url + '/rest/v1/', {
+          method: 'GET',
+          mode: 'cors',
+          headers: { apikey: key, Authorization: 'Bearer ' + key }
+        });
+        const text = await response.text();
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Key reddedildi. Status: ' + response.status + ' - ' + text.slice(0, 160));
         }
+        debugBox.textContent = 'Bağlantı testi başarılı. URL erişiliyor ve key gönderiliyor. Status: ' + response.status;
+        showToast('Bağlantı testi başarılı. Şimdi kaydet ve giriş dene.');
       } catch (err) {
-        const msg = err && err.message ? err.message : String(err);
-        if (debugBox) debugBox.textContent = '❌ Bağlantı testi başarısız: ' + msg;
-        showToast('Bağlantı testi başarısız: ' + msg, 'error');
+        debugBox.textContent = 'Bağlantı testi başarısız: ' + (err.message || err);
+        showToast('Bağlantı testi başarısız: ' + (err.message || err), 'error');
       }
     }
 
@@ -978,16 +977,16 @@
       showToast('Bağlantı kaydedildi.');
       screen('login');
     });
-    el('testSetupBtn').addEventListener('click', testSetupConnection);
+    if (el('testSetupBtn')) el('testSetupBtn').addEventListener('click', testSetupConnection);
     el('openSetupFromLogin').addEventListener('click', () => {
       const cfg = getConfig();
-      if (cfg) { el('setupUrl').value = cfg.url || DEFAULT_SUPABASE_URL; el('setupKey').value = cfg.key || DEFAULT_SUPABASE_KEY; }
+      if (cfg) { el('setupUrl').value = cfg.url || ''; el('setupKey').value = cfg.key || ''; }
       screen('setup');
     });
     el('setupBtn').addEventListener('click', () => {
       el('adminDropdown').classList.remove('show');
       const cfg = getConfig();
-      if (cfg) { el('setupUrl').value = cfg.url || DEFAULT_SUPABASE_URL; el('setupKey').value = cfg.key || DEFAULT_SUPABASE_KEY; }
+      if (cfg) { el('setupUrl').value = cfg.url || ''; el('setupKey').value = cfg.key || ''; }
       screen('setup');
     });
     el('loginBtn').addEventListener('click', async () => {
@@ -1062,7 +1061,7 @@
 
     (function start() {
       const cfg = getConfig();
-      if (!cfg) { screen('setup'); return; }
+      saveConfig(cfg.url, cfg.key);
       el('setupUrl').value = cfg.url || '';
       el('setupKey').value = cfg.key || '';
       if (!initClient()) { screen('setup'); return; }
