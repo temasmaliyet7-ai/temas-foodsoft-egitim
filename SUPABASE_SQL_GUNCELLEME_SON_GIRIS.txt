@@ -232,3 +232,13 @@ begin
   return true;
 end;
 $$;
+
+
+-- Admin panelin GitHub Pages üzerinden RPC fonksiyonlarını çağırabilmesi için yetkiler.
+grant usage on schema public to anon, authenticated;
+grant execute on function public.app_login(text, text) to anon, authenticated;
+grant execute on function public.admin_check(text, text) to anon, authenticated;
+grant execute on function public.admin_list_users(text, text) to anon, authenticated;
+grant execute on function public.admin_create_user(text, text, text, text, text, boolean) to anon, authenticated;
+grant execute on function public.admin_update_user(text, text, text, text, text, text, boolean) to anon, authenticated;
+grant execute on function public.admin_delete_user(text, text, text) to anon, authenticated;

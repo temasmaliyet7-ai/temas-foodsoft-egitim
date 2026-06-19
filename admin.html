@@ -734,8 +734,9 @@
         if (response.status === 401 || response.status === 403) {
           throw new Error('Key reddedildi. Status: ' + response.status + ' - ' + text.slice(0, 160));
         }
-        debugBox.textContent = 'Bağlantı testi başarılı. URL erişiliyor ve key gönderiliyor. Status: ' + response.status;
-        showToast('Bağlantı testi başarılı. Şimdi kaydet ve giriş dene.');
+        const adminCheck = await directRpc('admin_check', { p_admin_username: 'admin', p_admin_password: '1234' });
+        debugBox.textContent = 'Bağlantı testi başarılı. URL/key çalışıyor. admin_check sonucu: ' + JSON.stringify(adminCheck);
+        showToast('Bağlantı testi başarılı. admin_check sonucu: ' + JSON.stringify(adminCheck));
       } catch (err) {
         debugBox.textContent = 'Bağlantı testi başarısız: ' + (err.message || err);
         showToast('Bağlantı testi başarısız: ' + (err.message || err), 'error');
@@ -979,13 +980,26 @@
       const password = el('loginPassword').value;
       if (!username || !password) return showToast('Admin kullanıcı adı ve şifre gir.', 'error');
       try {
-        const data = await rpc('admin_list_users', { p_admin_username: username, p_admin_password: password });
+        // Önce sadece admin doğrulamasını yapıyoruz. Böylece kullanıcı listeleme tarafındaki
+        // bir hata, doğru admin girişini "giriş başarısız" gibi göstermesin.
+        const ok = await rpc('admin_check', { p_admin_username: username, p_admin_password: password });
+        const isAdminOk = ok === true || ok === 'true' || (Array.isArray(ok) && (ok[0] === true || ok[0] === 'true'));
+        if (!isAdminOk) throw new Error('Admin kullanıcı adı veya şifre hatalı.');
+
         saveSession(username, password);
-        users = data || [];
-        renderUsers();
         el('currentAdminText').textContent = username;
         screen('app');
-        showToast('Admin girişi başarılı.');
+        showToast('Admin girişi başarılı. Kullanıcı listesi alınıyor...');
+
+        try {
+          users = await rpc('admin_list_users', { p_admin_username: username, p_admin_password: password }) || [];
+          renderUsers();
+          showToast('Admin panel hazır.');
+        } catch (listErr) {
+          users = [];
+          renderUsers();
+          showToast('Giriş başarılı ama kullanıcı listesi alınamadı: ' + (listErr.message || listErr), 'error');
+        }
       } catch (err) { showToast('Giriş başarısız: ' + (err.message || err), 'error'); }
     });
     el('editCurrentUserBtn').addEventListener('click', () => { el('adminDropdown').classList.remove('show'); editCurrentUser(); });
