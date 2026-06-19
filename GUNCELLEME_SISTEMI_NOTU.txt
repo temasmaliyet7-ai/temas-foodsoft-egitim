@@ -1,0 +1,20 @@
+Bu otomatik güncelleme çekirdeği korunmalıdır.
+
+Normal güncelleme:
+- version.json içindeki "version" değerini değiştir.
+- "notifications": [] boş kalırsa zil bildirimi gönderilmez.
+
+Yeni eğitim/içerik eklendiğinde bildirim:
+{
+  "version": "20260619-02",
+  "notifications": [
+    {
+      "id": "fatura-isleme-20260619",
+      "message": "Fatura İşleme başlığı eklendi."
+    }
+  ]
+}
+
+Önemli:
+- index.html içindeki "KALICI OTOMATIK GUNCELLEME CEKIRDEGI - DOKUNMA" bloğunu silme.
+- Aynı GitHub/Netlify linki kullanılmaya devam eder.

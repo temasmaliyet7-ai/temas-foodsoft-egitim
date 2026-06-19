@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta name="app-version" content="36">
+  <meta name="app-version" content="37">
   <meta charset="UTF-8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -70,7 +70,7 @@
       background-repeat: no-repeat;
       background-position: center center;
       background-size: min(62vw, 430px);
-      opacity: .055;
+      opacity: .075;
       pointer-events: none;
       z-index: 0;
     }
@@ -98,6 +98,295 @@
 
     .app { width: min(1500px, 100%); margin: 0 auto; }
 
+    .auth-locked {
+      padding: 0;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    body.auth-locked .app,
+    body.auth-locked .drawer,
+    body.auth-locked .overlay {
+      display: none !important;
+    }
+
+    .auth-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: grid;
+      place-items: center;
+      padding: max(22px, env(safe-area-inset-top)) 18px max(22px, env(safe-area-inset-bottom));
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 16% 12%, rgba(49,183,230,.24), transparent 28%),
+        radial-gradient(circle at 86% 88%, rgba(22,143,192,.20), transparent 34%),
+        linear-gradient(135deg, #eefaff 0%, #ffffff 45%, #eaf9ff 100%);
+      color: #101922;
+    }
+
+    .auth-screen[hidden] {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    .auth-screen::before {
+      content: "";
+      position: absolute;
+      inset: -18%;
+      background-image: url("assets/temas-white-transparent.png?v=1");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: min(128vw, 760px);
+      opacity: .18;
+      filter: drop-shadow(0 0 26px rgba(69,198,240,.22)) drop-shadow(0 0 68px rgba(49,183,230,.18));
+      pointer-events: none;
+    }
+
+    .auth-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at center, rgba(69,198,240,.18) 0%, rgba(69,198,240,.10) 18%, rgba(69,198,240,.04) 32%, rgba(69,198,240,0) 58%),
+        linear-gradient(180deg, rgba(255,255,255,.30), rgba(255,255,255,.04)),
+        radial-gradient(circle at center, transparent 0%, rgba(238,250,255,.50) 78%);
+      pointer-events: none;
+    }
+
+    .auth-card {
+      position: relative;
+      z-index: 1;
+      width: min(420px, 100%);
+      border-radius: 34px;
+      padding: 28px 24px 24px;
+      border: 1px solid rgba(49,183,230,.20);
+      background: rgba(255,255,255,.48);
+      box-shadow: 0 28px 76px rgba(10,95,131,.16), inset 0 1px 0 rgba(255,255,255,.52);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      overflow: hidden;
+    }
+
+    .auth-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(69,198,240,.20), transparent 46%),
+        linear-gradient(135deg, rgba(255,255,255,.52), rgba(255,255,255,.08));
+      pointer-events: none;
+    }
+
+    .auth-card > * { position: relative; z-index: 1; }
+
+    .auth-logo-chip {
+      width: 82px;
+      height: 82px;
+      margin: 0 auto 14px;
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      background: rgb(54,195,248);
+      box-shadow: 0 18px 44px rgba(19,118,158,.20);
+      border: 0;
+      overflow: hidden;
+    }
+
+    .auth-logo-chip img {
+      width: 40px;
+      height: 58px;
+      object-fit: contain;
+      display: block;
+      filter: none;
+    }
+
+    .auth-title {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(24px, 7vw, 34px);
+      letter-spacing: -.9px;
+      line-height: 1.03;
+      font-weight: 950;
+      color: #0f2631;
+    }
+
+    .auth-subtitle {
+      margin: 10px auto 24px;
+      max-width: 300px;
+      text-align: center;
+      color: rgba(15,38,49,.70);
+      line-height: 1.45;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .auth-field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .auth-field label {
+      font-size: 12px;
+      font-weight: 900;
+      color: rgba(15,38,49,.70);
+      padding-left: 4px;
+      letter-spacing: .1px;
+    }
+
+    .auth-input-wrap {
+      height: 54px;
+      border-radius: 18px;
+      border: 1px solid rgba(49,183,230,.22);
+      background: rgba(255,255,255,.72);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.64);
+      transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+    }
+
+    .auth-input-wrap:focus-within {
+      border-color: rgba(49,183,230,.72);
+      box-shadow: 0 0 0 5px rgba(49,183,230,.12), inset 0 1px 0 rgba(255,255,255,.68);
+      transform: translateY(-1px);
+    }
+
+    .auth-icon {
+      color: #168fc0;
+      font-size: 18px;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .auth-input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: #10222d;
+      font: 800 15px/1 Arial, Helvetica, sans-serif;
+    }
+
+    .auth-input::placeholder { color: rgba(16,34,45,.42); font-weight: 750; }
+
+    .auth-eye {
+      border: 0;
+      background: transparent;
+      color: rgba(22,143,192,.82);
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 17px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .auth-eye:active { transform: scale(.96); }
+
+    .auth-submit {
+      width: 100%;
+      height: 56px;
+      margin-top: 8px;
+      border: 0;
+      border-radius: 19px;
+      cursor: pointer;
+      color: #fff;
+      font-weight: 950;
+      font-size: 16px;
+      letter-spacing: -.2px;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,.24), transparent 42%),
+        linear-gradient(135deg, #31b7e6, #168fc0);
+      box-shadow: 0 18px 42px rgba(19,118,158,.26);
+      transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+    }
+
+    .auth-submit:active { transform: scale(.985); }
+    .auth-submit:hover { filter: brightness(1.02); box-shadow: 0 22px 52px rgba(19,118,158,.30); }
+
+    .auth-error {
+      min-height: 20px;
+      margin: 12px 0 0;
+      text-align: center;
+      color: #c0392b;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .auth-footnote {
+      margin: 10px 0 0;
+      text-align: center;
+      color: rgba(15,38,49,.52);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .auth-screen {
+        background:
+          radial-gradient(circle at 18% 10%, rgba(69,198,240,.20), transparent 30%),
+          radial-gradient(circle at 84% 88%, rgba(26,157,204,.18), transparent 34%),
+          linear-gradient(135deg, #061017 0%, #0b1b23 48%, #07141a 100%);
+        color: #f5fbff;
+      }
+
+      .auth-screen::before {
+        opacity: .13;
+        filter: drop-shadow(0 0 32px rgba(69,198,240,.24)) drop-shadow(0 0 88px rgba(69,198,240,.14));
+      }
+
+      .auth-screen::after {
+        background:
+          radial-gradient(circle at center, rgba(69,198,240,.14) 0%, rgba(69,198,240,.08) 18%, rgba(69,198,240,0) 56%),
+          linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.06)),
+          radial-gradient(circle at center, transparent 0%, rgba(7,20,26,.70) 80%);
+      }
+
+      .auth-card {
+        border-color: rgba(120,216,248,.22);
+        background: rgba(10,26,34,.50);
+        box-shadow: 0 30px 82px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08);
+      }
+
+      .auth-card::before {
+        background:
+          radial-gradient(circle at 50% 0%, rgba(69,198,240,.16), transparent 48%),
+          linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      }
+
+      .auth-title { color: #f5fbff; }
+      .auth-subtitle { color: rgba(245,251,255,.68); }
+      .auth-field label { color: rgba(245,251,255,.68); }
+      .auth-input-wrap {
+        border-color: rgba(120,216,248,.20);
+        background: rgba(255,255,255,.07);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      }
+      .auth-input { color: #f6fcff; }
+      .auth-input::placeholder { color: rgba(246,252,255,.40); }
+      .auth-icon, .auth-eye { color: #45c6f0; }
+      .auth-error { color: #ff8f84; }
+      .auth-footnote { color: rgba(245,251,255,.44); }
+    }
+
+    @media (max-width: 520px) {
+      .auth-card {
+        border-radius: 30px;
+        padding: 24px 18px 20px;
+      }
+
+      .auth-screen::before {
+        background-size: min(150vw, 620px);
+      }
+    }
+
     .topbar {
       min-height: 82px;
       display: flex;
@@ -107,12 +396,15 @@
       padding: 14px 18px;
       border: 1px solid var(--line);
       border-radius: 24px;
-      background: var(--surface);
+      background:
+        radial-gradient(circle at center, rgba(49,183,230,.42) 0%, rgba(49,183,230,.22) 36%, rgba(255,255,255,.92) 72%),
+        linear-gradient(135deg, rgba(255,255,255,.96), rgba(236,251,255,.92));
       box-shadow: var(--shadow);
       backdrop-filter: blur(14px);
       position: sticky;
       top: 10px;
       z-index: 30;
+      overflow: hidden;
     }
 
     .hamburger, .close-btn, .back-home, .fullscreen-btn, .nav-btn {
@@ -120,49 +412,376 @@
     }
 
     .hamburger {
-      width: 52px;
-      height: 52px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: linear-gradient(180deg, var(--surface-strong), var(--accent-soft));
-      color: var(--text);
+      min-width: 108px;
+      height: 38px;
+      border: 1px solid rgba(49,183,230,.26);
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      box-shadow: 0 10px 24px rgba(19,118,158,.16);
+      flex: 0 0 auto;
+      padding: 0 11px;
+      font-weight: 900;
+      font-size: 14px;
+      line-height: 1;
+      margin-top: 5px;
+    }
+
+    .hamburger-book {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
       display: grid;
       place-items: center;
-      box-shadow: 0 10px 24px rgba(19,118,158,.13);
+      font-size: 12px;
+      line-height: 1;
+      background: rgba(255,255,255,.22);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.24);
       flex: 0 0 auto;
     }
 
-    .hamburger span,
-    .hamburger span::before,
-    .hamburger span::after {
-      width: 24px;
-      height: 2px;
-      background: var(--accent);
+    .hamburger-label {
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: -.2px;
+      white-space: nowrap;
+    }
+
+    .brand {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 74px;
+      height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 1;
+      border-radius: 22px;
+      background: rgb(54,195,248);
+      box-shadow: 0 14px 32px rgba(19,118,158,.16);
+      overflow: hidden;
+    }
+
+    .top-temas-logo {
+      height: 50px;
+      width: 34px;
+      object-fit: contain;
       display: block;
-      border-radius: 999px;
+      filter: none;
     }
 
-    .hamburger span { position: relative; }
-    .hamburger span::before, .hamburger span::after { content: ""; position: absolute; left: 0; }
-    .hamburger span::before { top: -8px; }
-    .hamburger span::after { top: 8px; }
+    .hamburger,
+    .topbar-actions {
+      position: relative;
+      z-index: 2;
+    }
 
-    .brand { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
-    .brand-title { min-width: 0; }
-
-
-
-    .brand-title h1 {
+    .brand-title,
+    .brand-title h1,
+    .brand-title p {
+      display: none;
       margin: 0;
-      font-size: clamp(18px, 2.1vw, 31px);
-      letter-spacing: .55px;
-      line-height: 1.05;
-      text-transform: uppercase;
-      color: var(--text);
     }
 
-    .brand-title p { margin: 6px 0 0; color: var(--muted); font-size: clamp(12px, 1.1vw, 15px); }
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .notification-wrap {
+      position: relative;
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notification-bell {
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      border: 1px solid rgba(49,183,230,.24);
+      background: rgba(255,255,255,.90);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(19,118,158,.12);
+      font-size: 22px;
+      line-height: 1;
+      position: relative;
+      transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+    }
+
+    .notification-bell svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+      color: currentColor;
+      fill: none;
+      stroke: currentColor;
+    }
+
+    .notification-bell::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: inherit;
+      border: 2px solid rgba(49,183,230,.0);
+      pointer-events: none;
+    }
+
+    .notification-bell.has-notification {
+      animation: bellShake 1.25s ease-in-out infinite;
+      background: rgba(242,252,255,.98);
+      box-shadow: 0 14px 30px rgba(19,118,158,.18), 0 0 0 8px rgba(49,183,230,.08);
+    }
+
+    .notification-bell.has-notification::after {
+      animation: bellGlow 1.45s ease-in-out infinite;
+    }
+
+    .notification-popover {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      width: min(310px, calc(100vw - 28px));
+      border-radius: 20px;
+      border: 1px solid rgba(49,183,230,.24);
+      background: rgba(255,255,255,.96);
+      color: var(--text);
+      box-shadow: 0 18px 42px rgba(19,118,158,.18);
+      padding: 14px;
+      z-index: 80;
+      backdrop-filter: blur(12px);
+    }
+
+    .notification-popover[hidden] {
+      display: none !important;
+    }
+
+    .notification-popover::before {
+      content: "";
+      position: absolute;
+      top: -7px;
+      right: 18px;
+      width: 14px;
+      height: 14px;
+      transform: rotate(45deg);
+      background: rgba(255,255,255,.96);
+      border-left: 1px solid rgba(49,183,230,.24);
+      border-top: 1px solid rgba(49,183,230,.24);
+    }
+
+    .notification-popover strong {
+      display: block;
+      color: var(--accent-dark);
+      font-size: 15px;
+      margin-bottom: 7px;
+    }
+
+    .notification-popover p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+
+    .notification-dismiss {
+      width: 100%;
+      min-height: 38px;
+      margin-top: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(49,183,230,.26);
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    @keyframes bellShake {
+      0%, 100% { transform: rotate(0deg); }
+      10% { transform: rotate(-9deg); }
+      20% { transform: rotate(8deg); }
+      30% { transform: rotate(-7deg); }
+      40% { transform: rotate(6deg); }
+      50% { transform: rotate(0deg); }
+    }
+
+    @keyframes bellGlow {
+      0%, 100% {
+        border-color: rgba(49,183,230,.0);
+        box-shadow: 0 0 0 0 rgba(49,183,230,.0);
+      }
+      50% {
+        border-color: rgba(49,183,230,.34);
+        box-shadow: 0 0 0 9px rgba(49,183,230,.10);
+      }
+    }
+
+    .home {
+      min-height: calc(100vh - 154px);
+      display: flex;
+      justify-content: center;
+      padding: 28px 0 32px;
+    }
+
+    .home-shell {
+      width: min(620px, 100%);
+    }
+
+    .welcome-copy {
+      text-align: left;
+      padding: 0 10px 18px;
+    }
+
+    .welcome-copy h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(26px, 4.2vw, 40px);
+      line-height: 1.1;
+      letter-spacing: -.5px;
+    }
+
+    .welcome-copy p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: clamp(16px, 2.2vw, 18px);
+      line-height: 1.45;
+      font-weight: 600;
+    }
+
+    .hero {
+      width: min(560px, 100%);
+      margin: 0 auto;
+      text-align: center;
+      border: 0;
+      border-radius: 34px;
+      padding: 32px 20px 12px;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      position: relative;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 20px 18px 10px;
+      border-radius: 34px;
+      background:
+        radial-gradient(circle at center, rgba(49,183,230,.16) 0, rgba(49,183,230,.10) 34%, rgba(49,183,230,.05) 52%, rgba(49,183,230,0) 72%);
+      filter: blur(1px);
+      animation: heroGlow 2.8s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    .hero-badge {
+      position: relative;
+      z-index: 2;
+      width: 68px;
+      height: 68px;
+      margin: 0 auto -28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 14px 30px rgba(19,118,158,.20);
+      font-size: 28px;
+    }
+
+    .hero-card {
+      position: relative;
+      z-index: 1;
+      background: rgba(255,255,255,.68);
+      border: 1px solid rgba(49,183,230,.16);
+      border-radius: 28px;
+      padding: 52px 26px 24px;
+      box-shadow: 0 18px 40px rgba(19,118,158,.11);
+      overflow: visible;
+      backdrop-filter: blur(2px);
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: -14px;
+      border-radius: 34px;
+      background: radial-gradient(circle at center, rgba(49,183,230,.20), rgba(49,183,230,.08) 42%, rgba(49,183,230,0) 70%);
+      z-index: -1;
+      animation: heroCardLight 1.9s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes heroCardLight {
+      0%, 100% { opacity: .40; transform: scale(.985); }
+      50% { opacity: 1; transform: scale(1.025); }
+    }
+
+    .hero h2 {
+      margin: 0;
+      font-size: clamp(20px, 3.4vw, 28px);
+      letter-spacing: -.35px;
+      text-transform: none;
+      color: var(--accent-dark);
+      line-height: 1.35;
+      font-weight: 900;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 320px;
+      color: var(--accent-dark);
+      font-size: clamp(15px, 2vw, 18px);
+      line-height: 1.45;
+      font-weight: 800;
+    }
+
+    .hero-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hero-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(49,183,230,.24);
+    }
+
+    .hero-dot.active {
+      background: var(--accent-2);
+    }
+
+    @keyframes heroGlow {
+      0%, 100% {
+        transform: scale(.98);
+        opacity: .78;
+      }
+      50% {
+        transform: scale(1.02);
+        opacity: 1;
+      }
+    }
 
     .overlay {
       position: fixed;
@@ -209,39 +828,67 @@
     }
 
     .menu-note { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.4; }
-    .menu-list { display: grid; gap: 10px; }
+    .menu-list { display: grid; gap: 12px; }
 
     .menu-item {
       width: 100%;
       text-align: left;
       color: var(--text);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: var(--surface);
-      padding: 14px;
+      border: 1px solid rgba(49,183,230,.20);
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(255,255,255,.94), rgba(235,250,255,.78));
+      padding: 13px 14px;
       cursor: pointer;
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
       transition: transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      box-shadow: 0 10px 24px rgba(19,118,158,.08);
+      position: relative;
+      overflow: hidden;
     }
-    .menu-item:hover { transform: translateY(-1px); border-color: rgba(49,183,230,.35); box-shadow: 0 12px 26px rgba(19,118,158,.11); }
-    .menu-item.active { background: linear-gradient(135deg, var(--accent-soft), var(--surface-strong)); border-color: rgba(49,183,230,.42); }
-    .menu-item .name { display: block; font-weight: 900; font-size: 15px; margin-bottom: 5px; }
-    .menu-item .desc { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
-
-    .home { min-height: calc(100vh - 130px); display: grid; place-items: center; padding: 24px 0; }
-
-    .hero {
-      width: min(980px, 100%);
-      text-align: center;
-      border: 1px solid var(--line);
-      border-radius: 32px;
-      padding: clamp(24px, 5vw, 56px);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
+    .menu-item::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, rgba(49,183,230,.13), transparent 45%);
+      pointer-events: none;
+    }
+    .menu-item:hover { transform: translateY(-1px); border-color: rgba(49,183,230,.35); box-shadow: 0 14px 30px rgba(19,118,158,.13); }
+    .menu-item.active { background: linear-gradient(135deg, rgba(49,183,230,.16), rgba(255,255,255,.96)); border-color: rgba(49,183,230,.45); }
+    .menu-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      font-size: 18px;
+      box-shadow: 0 10px 20px rgba(19,118,158,.15);
+      position: relative;
+      z-index: 1;
+    }
+    .menu-copy { min-width: 0; position: relative; z-index: 1; }
+    .menu-item .name { display: block; font-weight: 950; font-size: 15px; margin-bottom: 0; color: var(--accent-dark); letter-spacing: -.2px; line-height: 1.25; }
+    .menu-count {
+      position: relative;
+      z-index: 1;
+      min-width: 52px;
+      height: 30px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-dark);
+      background: rgba(49,183,230,.12);
+      border: 1px solid rgba(49,183,230,.18);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
     }
 
-    .hero h2 { margin: 0; font-size: clamp(25px, 4vw, 52px); letter-spacing: .65px; text-transform: uppercase; color: var(--text); }
-    .hero p { margin: 14px auto 0; max-width: 620px; color: var(--muted); font-size: clamp(14px, 1.45vw, 18px); line-height: 1.55; }
 
     .viewer { display: none; margin-top: 14px; }
     .viewer.open { display: block; }
@@ -409,10 +1056,23 @@
     @media (max-width: 768px) {
       body { padding: 8px; }
       .topbar { min-height: 74px; padding: 10px; border-radius: 18px; top: 6px; }
-      .hamburger { width: 46px; height: 46px; border-radius: 14px; }
-      .brand-title h1 { font-size: 14px; }
-      .brand-title p { font-size: 11px; }
-      .hero { border-radius: 22px; padding: 26px 16px; }
+      .brand { width: 58px; height: 58px; border-radius: 18px; }
+      .top-temas-logo { width: 28px; height: 42px; }
+      .top-temas-logo { height: 42px; width: 28px; }
+      .hamburger { min-width: 98px; height: 36px; border-radius: 999px; padding: 0 9px; margin-top: 4px; }
+      .hamburger-label { font-size: 12px; }
+      .hamburger-book { width: 19px; height: 19px; font-size: 11px; }
+      .topbar-actions { gap: 7px; }
+      .notification-bell { width: 46px; height: 46px; font-size: 20px; }
+      .notification-popover { top: calc(100% + 10px); right: -2px; }
+      .home { min-height: calc(100vh - 148px); padding: 22px 0 24px; }
+      .home-shell { width: 100%; }
+      .welcome-copy { padding: 0 4px 14px; }
+      .welcome-copy h2 { font-size: 26px; }
+      .welcome-copy p { margin-top: 8px; font-size: 15px; }
+      .hero { border-radius: 22px; padding: 28px 10px 8px; }
+      .hero-badge { width: 60px; height: 60px; margin-bottom: -24px; font-size: 24px; }
+      .hero-card { border-radius: 24px; padding: 46px 18px 20px; }
       .viewer-head { border-radius: 16px; padding: 12px; align-items: flex-start; }
       .viewer-actions { flex-direction: column; align-items: stretch; gap: 7px; }
       .viewer-head p { display: none; }
@@ -426,8 +1086,14 @@
     }
 
     @media (max-width: 390px) {
-      .brand-title h1 { font-size: 12px; }
-      .brand-title p { display: none; }
+      .hamburger { min-width: 92px; height: 34px; padding: 0 8px; }
+      .hamburger-label { font-size: 11px; }
+      .hamburger-book { width: 18px; height: 18px; font-size: 10px; }
+      .notification-bell { width: 42px; height: 42px; font-size: 19px; }
+      .brand { width: 54px; height: 54px; border-radius: 16px; }
+      .top-temas-logo { height: 38px; width: 26px; }
+      .welcome-copy h2 { font-size: 24px; }
+      .welcome-copy p { font-size: 14px; }
     }
   
     /* V8 sağ üst gerçek Temaş logo düzeltmesi */
@@ -439,11 +1105,14 @@
 
     .brand {
       min-width: 0 !important;
+      justify-content: center !important;
+      display: flex !important;
+      opacity: 1 !important;
     }
 
     .right-logo-box {
-      width: 86px !important;
-      height: 66px !important;
+      width: 78px !important;
+      height: 60px !important;
       border-radius: 16px !important;
       background: rgba(255,255,255,.96) !important;
       border: 1px solid rgba(49,183,230,.28) !important;
@@ -469,8 +1138,8 @@
 
     @media (max-width: 768px) {
       .right-logo-box {
-        width: 60px !important;
-        height: 50px !important;
+        width: 56px !important;
+        height: 46px !important;
         border-radius: 13px !important;
         padding: 4px !important;
       }
@@ -478,15 +1147,13 @@
 
     @media (max-width: 390px) {
       .right-logo-box {
-        width: 52px !important;
-        height: 44px !important;
+        width: 50px !important;
+        height: 42px !important;
         border-radius: 12px !important;
         padding: 4px !important;
       }
     }
-
-  
-    /* V9 belge görüntüleme düzeltmesi: görünmez sağ/sol dokunma alanları */
+/* V9 belge görüntüleme düzeltmesi: görünmez sağ/sol dokunma alanları */
     .stage {
       background: #ffffff !important;
       overflow: hidden !important;
@@ -598,8 +1265,8 @@
     .stage-fullscreen-btn {
       position: static;
       z-index: 7;
-      height: 34px;
-      padding: 0 10px;
+      height: 30px;
+      padding: 0 9px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -1144,7 +1811,38 @@
   </style>
 </head>
 
-<body>
+<body class="auth-locked home-active">
+  <section class="auth-screen" id="authScreen" aria-label="Foodsoft Eğitim Girişi">
+    <form class="auth-card" id="authForm" autocomplete="on">
+      <div class="auth-logo-chip" aria-hidden="true">
+        <img src="assets/foodsoft-clean.png?v=1" alt="Foodsoft Logo">
+      </div>
+      <h1 class="auth-title">Foodsoft Eğitim Programı</h1>
+      <p class="auth-subtitle">Eğitim içeriklerine erişmek için kullanıcı bilgilerinizi giriniz.</p>
+
+      <div class="auth-field">
+        <label for="authUser">Kullanıcı adı</label>
+        <div class="auth-input-wrap">
+          <span class="auth-icon" aria-hidden="true">👤</span>
+          <input class="auth-input" id="authUser" name="username" type="text" placeholder="Kullanıcı adınızı girin" autocomplete="username">
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label for="authPass">Şifre</label>
+        <div class="auth-input-wrap">
+          <span class="auth-icon" aria-hidden="true">🔒</span>
+          <input class="auth-input" id="authPass" name="password" type="password" placeholder="Şifrenizi girin" autocomplete="current-password">
+          <button class="auth-eye" id="authTogglePass" type="button" aria-label="Şifreyi göster">👁</button>
+        </div>
+      </div>
+
+      <button class="auth-submit" id="authSubmit" type="submit" onclick="document.body.classList.remove('auth-locked');var s=document.getElementById('authScreen');if(s){s.hidden=true;s.style.display='none';s.style.visibility='hidden';s.style.pointerEvents='none';}return false;">Giriş Yap</button>
+      <p class="auth-error" id="authError" aria-live="polite"></p>
+      <p class="auth-footnote">Temaş Catering · Eğitim erişim ekranı</p>
+    </form>
+  </section>
+
   <div class="overlay" id="overlay"></div>
 
   <aside class="drawer" id="drawer" aria-label="Eğitim menüsü">
@@ -1158,26 +1856,50 @@
 
   <main class="app">
     <header class="topbar">
-      <button class="hamburger" id="openMenu" type="button" aria-label="Menüyü aç">
-        <span></span>
+      <button class="hamburger" id="openMenu" type="button" aria-label="Kütüphanem menüsünü aç">
+        <span class="hamburger-book" aria-hidden="true">📖</span>
+        <span class="hamburger-label">Kütüphanem</span>
       </button>
 
-      <div class="brand">
-        <div class="brand-title">
-          <h1>Foodsoft Eğitim Programı</h1>
-          <p>Foodsoft eğitim dokümanları</p>
-        </div>
+      <div class="brand" aria-hidden="true">
+        <img class="top-temas-logo" src="assets/foodsoft-clean.png?v=1" alt="Foodsoft Logo">
       </div>
 
-      <div class="right-logo-box" aria-label="Temaş Logo">
-        <img class="right-logo" src="assets/temas-right-logo.png?v=34" alt="Temaş Logo">
+      <div class="topbar-actions">
+        <div class="notification-wrap">
+          <button class="notification-bell" id="notificationBell" type="button" aria-label="Bildirimler">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+          <div class="notification-popover" id="notificationPopover" role="dialog" aria-label="Bildirim kutusu" hidden>
+            <strong>Bildirim</strong>
+            <p id="notificationText">Yeni bildirim yok.</p>
+            <button class="notification-dismiss" id="notificationDismiss" type="button">Bildirimi kapat</button>
+          </div>
+        </div>
       </div>
     </header>
 
     <section class="home" id="home">
-      <div class="hero">
-        <h2>Foodsoft Eğitim Programı</h2>
-        <p>Bu alandan Foodsoft eğitim dokümanlarına ulaşabilirsiniz. Sol üstteki üç çizgili menüden eğitim başlığını seçerek dokümanı görüntüleyebilirsiniz.</p>
+      <div class="home-shell">
+        <div class="welcome-copy">
+          <h2>Merhaba, Hoş geldiniz! 👋</h2>
+          <p>Bugün kendinizi geliştirmek için harika bir gün.</p>
+        </div>
+
+        <div class="hero" aria-label="Ana bilgilendirme kartı">
+          <div class="hero-badge" aria-hidden="true">📖</div>
+          <div class="hero-card">
+            <h2>Eğitim içeriklerine<br>ulaşmak için<br>Kütüphanem kısmını<br>kullanabilirsiniz.</h2>
+            <div class="hero-dots" aria-hidden="true">
+              <span class="hero-dot"></span>
+              <span class="hero-dot active"></span>
+              <span class="hero-dot"></span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1242,59 +1964,104 @@
   </div>
 
   <script>
-    const APP_VERSION = "auto-20260618-fullscreen-hint-04";
+    const APP_VERSION = "auto-20260619-core-update-permanent-01";
     let latestAssetVersion = APP_VERSION;
 
     /*
-      Otomatik güncelleme sistemi:
+      KALICI OTOMATIK GUNCELLEME CEKIRDEGI - DOKUNMA
       - Kullanıcıya verilen ana link değişmez.
-      - Görseller her çağrıldığında cache kırılarak GitHub'daki güncel dosya alınır.
-      - version.json varsa arka planda okunur; yoksa Date.now() ile yine eski görsel tutulmaz.
+      - GitHub/Netlify üstündeki dosyalar güncellenince aynı link güncel sürümü alır.
+      - version.json normal güncelleme kontrolüdür.
+      - Bildirim sistemi ayrı çalışır: sadece notifications doluysa zil oynar.
+      - Yeni tasarım, giriş ekranı veya eğitim eklerken bu bloğu silme/değiştirme.
     */
+    const UPDATE_CORE_STORAGE_KEY = "foodsoft-loaded-version-core-v1";
+
     function withVersion(path) {
       if (!path || path.startsWith("data:")) return path;
       const cacheBuster = latestAssetVersion + "-" + Date.now();
       return path + (path.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(cacheBuster);
     }
 
+    function forceFreshAppReload(nextVersion) {
+      if (!nextVersion) return;
+      try {
+        const lastLoaded = sessionStorage.getItem(UPDATE_CORE_STORAGE_KEY);
+        if (lastLoaded === String(nextVersion)) return;
+        sessionStorage.setItem(UPDATE_CORE_STORAGE_KEY, String(nextVersion));
+
+        const url = new URL(window.location.href);
+        url.searchParams.set("appv", String(nextVersion));
+        window.location.replace(url.toString());
+      } catch (e) {
+        try { window.location.reload(); } catch (err) {}
+      }
+    }
+
+    function clearOldBrowserCaches() {
+      try {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.getRegistrations()
+            .then(registrations => registrations.forEach(reg => reg.unregister()))
+            .catch(() => {});
+        }
+        if ("caches" in window) {
+          caches.keys()
+            .then(keys => keys.forEach(key => caches.delete(key)))
+            .catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    function setImageSource(imgElement, path, useVersion = true) {
+      if (!imgElement || !path) return;
+      imgElement.dataset.rawSrc = path;
+      imgElement.dataset.retryDone = "0";
+      imgElement.src = useVersion ? withVersion(path) : path;
+    }
+
     function refreshVisibleImages() {
       if (!activeTraining) return;
       const currentSrc = activeTraining.pages[currentPage - 1];
-      pageImage.src = withVersion(currentSrc);
-      fullscreenImage.src = withVersion(currentSrc);
+      setImageSource(pageImage, currentSrc);
+      setImageSource(fullscreenImage, currentSrc);
     }
 
-    (function checkLatestVersion() {
-      try {
-        fetch("version.json?t=" + Date.now(), { cache: "no-store" })
-          .then(response => response.ok ? response.json() : null)
-          .then(data => {
-            if (!data || !data.version) return;
-            const latestVersion = String(data.version);
-            if (latestVersion && latestVersion !== latestAssetVersion) {
-              latestAssetVersion = latestVersion;
-              refreshVisibleImages();
-            }
-          })
-          .catch(() => {});
-      } catch (e) {}
-    })();
+    function applyVersionData(data) {
+      if (!data || typeof data !== "object") {
+        setNotificationIdle();
+        return;
+      }
 
-    window.setInterval(() => {
+      if (data.version) {
+        const latestVersion = String(data.version);
+        if (latestVersion && latestVersion !== latestAssetVersion) {
+          latestAssetVersion = latestVersion;
+          refreshVisibleImages();
+          forceFreshAppReload(latestVersion);
+          return;
+        }
+      }
+
+      handleVersionNotification(data);
+    }
+
+    function fetchLatestVersionData() {
       try {
         fetch("version.json?t=" + Date.now(), { cache: "no-store" })
           .then(response => response.ok ? response.json() : null)
-          .then(data => {
-            if (!data || !data.version) return;
-            const latestVersion = String(data.version);
-            if (latestVersion && latestVersion !== latestAssetVersion) {
-              latestAssetVersion = latestVersion;
-              refreshVisibleImages();
-            }
-          })
-          .catch(() => {});
-      } catch (e) {}
-    }, 60000);
+          .then(applyVersionData)
+          .catch(() => {
+            setNotificationIdle();
+          });
+      } catch (e) {
+        setNotificationIdle();
+      }
+    }
+
+    clearOldBrowserCaches();
+    fetchLatestVersionData();
+    window.setInterval(fetchLatestVersionData, 60000);
 
     const trainings = [{'id': 'depo-sayimi', 'title': 'Depo Sayımı Oluşturma', 'subtitle': "Foodsoft'ta depo sayımı oluşturma rehberi", 'pages': ['trainings/depo-sayimi/page-1.png', 'trainings/depo-sayimi/page-2.png', 'trainings/depo-sayimi/page-3.png', 'trainings/depo-sayimi/page-4.png', 'trainings/depo-sayimi/page-5.png', 'trainings/depo-sayimi/page-6.png']}, {'id': 'talep-acma', 'title': 'Talep Açma', 'subtitle': "Foodsoft'ta talep açma işlemleri rehberi", 'pages': ['trainings/talep-acma/page-1.png', 'trainings/talep-acma/page-2.png', 'trainings/talep-acma/page-3.png', 'trainings/talep-acma/page-4.png', 'trainings/talep-acma/page-5.png']}, {'id': 'irsaliye-isleme', 'title': 'İrsaliye İşleme', 'subtitle': "Foodsoft'ta irsaliye işleme rehberi", 'pages': ['trainings/irsaliye-isleme/page-1.png', 'trainings/irsaliye-isleme/page-2.png', 'trainings/irsaliye-isleme/page-3.png', 'trainings/irsaliye-isleme/page-4.png', 'trainings/irsaliye-isleme/page-5.png', 'trainings/irsaliye-isleme/page-6.png', 'trainings/irsaliye-isleme/page-7.png']}];
 
@@ -1306,6 +2073,13 @@
     const home = document.getElementById("home");
     const viewer = document.getElementById("viewer");
     const backHome = document.getElementById("backHome");
+    const authScreen = document.getElementById("authScreen");
+    const authForm = document.getElementById("authForm");
+    const authUser = document.getElementById("authUser");
+    const authPass = document.getElementById("authPass");
+    const authError = document.getElementById("authError");
+    const authTogglePass = document.getElementById("authTogglePass");
+    const authSubmit = document.getElementById("authSubmit");
 
     const titleEl = document.getElementById("trainingTitle");
     const subtitleEl = document.getElementById("trainingSubtitle");
@@ -1326,9 +2100,126 @@
     const fullscreenPrevBtn = document.getElementById("fullscreenPrevBtn");
     const fullscreenNextBtn = document.getElementById("fullscreenNextBtn");
     const swipeHint = document.getElementById("swipeHint");
+    const notificationBell = document.getElementById("notificationBell");
+    const notificationPopover = document.getElementById("notificationPopover");
+    const notificationText = document.getElementById("notificationText");
+    const notificationDismiss = document.getElementById("notificationDismiss");
+    const NOTIFICATION_ACK_KEY = "foodsoft-seen-notification-ids-v1";
+    let hasUnreadUpdateNotification = false;
+    let currentUnreadNotifications = [];
 
     let activeTraining = null;
     let currentPage = 1;
+
+    function unlockDemoAuth() {
+      if (authError) authError.textContent = "";
+      document.body.classList.remove("auth-locked");
+      if (authScreen) {
+        authScreen.hidden = true;
+        authScreen.style.display = "none";
+        authScreen.setAttribute("aria-hidden", "true");
+      }
+      requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+    }
+
+    function handleDemoAuth(event) {
+      if (event) event.preventDefault();
+      unlockDemoAuth();
+    }
+
+    if (authForm) {
+      authForm.addEventListener("submit", handleDemoAuth);
+    }
+
+    if (authSubmit) {
+      authSubmit.addEventListener("click", handleDemoAuth);
+    }
+
+    if (authTogglePass && authPass) {
+      authTogglePass.addEventListener("click", () => {
+        const isHidden = authPass.type === "password";
+        authPass.type = isHidden ? "text" : "password";
+        authTogglePass.textContent = isHidden ? "🙈" : "👁";
+        authTogglePass.setAttribute("aria-label", isHidden ? "Şifreyi gizle" : "Şifreyi göster");
+        authPass.focus();
+      });
+    }
+
+    function getSeenNotificationIds() {
+      try {
+        const raw = localStorage.getItem(NOTIFICATION_ACK_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveSeenNotificationIds(ids) {
+      try {
+        const uniqueIds = [...new Set((ids || []).map(String).filter(Boolean))];
+        localStorage.setItem(NOTIFICATION_ACK_KEY, JSON.stringify(uniqueIds));
+      } catch (e) {}
+    }
+
+    function normalizeNotifications(data) {
+      const list = data && Array.isArray(data.notifications) ? data.notifications : [];
+      return list
+        .map((item, index) => {
+          if (typeof item === "string") {
+            const message = item.trim();
+            return message ? { id: message, message } : null;
+          }
+          if (!item || typeof item !== "object") return null;
+          const message = String(item.message || item.title || "").trim();
+          if (!message) return null;
+          const id = String(item.id || message || ("notification-" + index)).trim();
+          return { id, message };
+        })
+        .filter(Boolean);
+    }
+
+    function setNotificationIdle() {
+      hasUnreadUpdateNotification = false;
+      currentUnreadNotifications = [];
+      if (notificationBell) notificationBell.classList.remove("has-notification");
+      if (notificationPopover) notificationPopover.hidden = true;
+    }
+
+    function setNotificationUpdate(notifications = []) {
+      currentUnreadNotifications = notifications;
+      hasUnreadUpdateNotification = notifications.length > 0;
+      if (!hasUnreadUpdateNotification) {
+        setNotificationIdle();
+        return;
+      }
+      const message = notifications.map(item => item.message).join("\n");
+      if (notificationText) notificationText.textContent = message;
+      if (notificationBell) notificationBell.classList.add("has-notification");
+    }
+
+    function initializeNotificationState() {
+      setNotificationIdle();
+    }
+
+    function handleVersionNotification(data) {
+      const notifications = normalizeNotifications(data);
+      if (!notifications.length) {
+        setNotificationIdle();
+        return;
+      }
+
+      const seenIds = getSeenNotificationIds();
+      const unread = notifications.filter(item => !seenIds.includes(String(item.id)));
+
+      if (unread.length) {
+        setNotificationUpdate(unread);
+      } else {
+        setNotificationIdle();
+      }
+    }
+
+    initializeNotificationState();
 
     function openDrawer() {
       drawer.classList.add("open");
@@ -1343,6 +2234,27 @@
     openMenu.addEventListener("click", openDrawer);
     closeMenu.addEventListener("click", closeDrawer);
     overlay.addEventListener("click", closeDrawer);
+    if (notificationBell) {
+      notificationBell.addEventListener("click", () => {
+        if (!hasUnreadUpdateNotification) return;
+        if (notificationPopover) notificationPopover.hidden = !notificationPopover.hidden;
+      });
+    }
+
+    if (notificationDismiss) {
+      notificationDismiss.addEventListener("click", () => {
+        const seenIds = getSeenNotificationIds();
+        const unreadIds = currentUnreadNotifications.map(item => item.id);
+        saveSeenNotificationIds([...seenIds, ...unreadIds]);
+        setNotificationIdle();
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!notificationPopover || notificationPopover.hidden) return;
+      const wrap = e.target.closest ? e.target.closest(".notification-wrap") : null;
+      if (!wrap) notificationPopover.hidden = true;
+    });
 
     function renderMenu() {
       menuList.innerHTML = "";
@@ -1350,7 +2262,7 @@
         const btn = document.createElement("button");
         btn.className = "menu-item";
         btn.type = "button";
-        btn.innerHTML = `<span class="name">${index + 1}. ${item.title}</span><span class="desc">${item.subtitle} - ${item.pages.length} sayfa</span>`;
+        btn.innerHTML = `<span class="menu-icon" aria-hidden="true">📘</span><span class="menu-copy"><span class="name">${item.title}</span></span><span class="menu-count">${item.pages.length} sf</span>`;
         btn.addEventListener("click", () => selectTraining(item.id));
         menuList.appendChild(btn);
       });
@@ -1366,6 +2278,7 @@
       activeTraining = trainings.find(t => t.id === id);
       currentPage = 1;
       home.style.display = "none";
+      document.body.classList.remove("home-active");
       viewer.classList.add("open");
       titleEl.textContent = activeTraining.title;
       subtitleEl.textContent = activeTraining.subtitle;
@@ -1386,11 +2299,11 @@
       const isFullscreenOpen = fullscreenViewer.classList.contains("open");
 
       setTimeout(() => {
-        pageImage.src = withVersion(activeTraining.pages[currentPage - 1]);
+        setImageSource(pageImage, activeTraining.pages[currentPage - 1]);
         pageImage.alt = activeTraining.title + " - Sayfa " + currentPage;
         pageInfo.textContent = currentPage + " / " + activeTraining.pages.length;
         fullscreenPageInfo.textContent = currentPage + " / " + activeTraining.pages.length;
-        fullscreenImage.src = withVersion(activeTraining.pages[currentPage - 1]);
+        setImageSource(fullscreenImage, activeTraining.pages[currentPage - 1]);
         fullscreenImage.alt = activeTraining.title + " - Sayfa " + currentPage;
 
         if (isFullscreenOpen) {
@@ -1409,6 +2322,19 @@
     pageImage.addEventListener("load", () => {
       /* V9: flicker kapatıldı */
     });
+
+
+    function restoreImageOnError(event) {
+      const img = event.currentTarget;
+      const rawSrc = img && img.dataset ? img.dataset.rawSrc : "";
+      if (!img || !rawSrc) return;
+      if (img.dataset.retryDone === "1") return;
+      img.dataset.retryDone = "1";
+      img.src = rawSrc;
+    }
+
+    pageImage.addEventListener("error", restoreImageOnError);
+    fullscreenImage.addEventListener("error", restoreImageOnError);
 
     function goPage(delta) {
       if (!activeTraining) return;
@@ -1485,7 +2411,7 @@
       if (!activeTraining) return;
       updateFullscreenViewportHeight();
       fullscreenDragReset();
-      fullscreenImage.src = withVersion(activeTraining.pages[currentPage - 1]);
+      setImageSource(fullscreenImage, activeTraining.pages[currentPage - 1]);
       fullscreenImage.alt = activeTraining.title + " - Sayfa " + currentPage;
       fullscreenPageInfo.textContent = currentPage + " / " + activeTraining.pages.length;
       fullscreenViewer.classList.add("open");
@@ -1545,6 +2471,7 @@
     backHome.addEventListener("click", () => {
       viewer.classList.remove("open");
       home.style.display = "grid";
+      document.body.classList.add("home-active");
       activeTraining = null;
       updateMenuActive();
       if (swipeHint) swipeHint.classList.remove("show", "fullscreen-mode");
