@@ -2232,17 +2232,55 @@
     const SUPABASE_CONFIG_KEY = "foodsoft_admin_supabase_config_v1";
     let loginSupabaseClient = null;
 
+    function normalizeProjectUrl(value) {
+      let url = String(value || '').trim();
+      url = url.replace(/\s+/g, '');
+      url = url.replace(/\/rest\/v1\/?$/i, '');
+      url = url.replace(/\/+$/g, '');
+      return url;
+    }
+    function normalizeApiKey(value) {
+      return String(value || '').trim().replace(/\s+/g, '');
+    }
+
     function getSupabaseConfig() {
-      try { return JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || "null"); }
-      catch (e) { return null; }
+      try {
+        const cfg = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || "null");
+        if (!cfg) return null;
+        cfg.url = normalizeProjectUrl(cfg.url);
+        cfg.key = normalizeApiKey(cfg.key);
+        return cfg;
+      } catch (e) { return null; }
     }
 
     function getLoginSupabaseClient() {
       if (loginSupabaseClient) return loginSupabaseClient;
       const cfg = getSupabaseConfig();
       if (!cfg || !cfg.url || !cfg.key || !window.supabase) return null;
-      loginSupabaseClient = window.supabase.createClient(cfg.url, cfg.key);
+      loginSupabaseClient = window.supabase.createClient(cfg.url, cfg.key, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        global: { headers: { apikey: cfg.key, Authorization: 'Bearer ' + cfg.key } }
+      });
       return loginSupabaseClient;
+    }
+
+    async function directLoginRpc(username, password) {
+      const cfg = getSupabaseConfig();
+      if (!cfg || !cfg.url || !cfg.key) throw new Error('Supabase bağlantısı bulunamadı.');
+      const response = await fetch(cfg.url + '/rest/v1/rpc/app_login', {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          apikey: cfg.key,
+          Authorization: 'Bearer ' + cfg.key,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation'
+        },
+        body: JSON.stringify({ p_username: username, p_password: password })
+      });
+      const text = await response.text();
+      if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + text.slice(0, 220));
+      return text ? JSON.parse(text) : [];
     }
 
     async function handleUserAuth(event) {
@@ -2264,8 +2302,19 @@
         authSubmit.textContent = "Kontrol ediliyor...";
       }
       try {
-        const { data, error } = await client.rpc("app_login", { p_username: username, p_password: password });
-        if (error) throw error;
+        let data;
+        try {
+          const result = await client.rpc("app_login", { p_username: username, p_password: password });
+          if (result.error) throw result.error;
+          data = result.data;
+        } catch (err) {
+          const msg = String(err && (err.message || err));
+          if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch')) {
+            data = await directLoginRpc(username, password);
+          } else {
+            throw err;
+          }
+        }
         if (!Array.isArray(data) || data.length === 0) {
           if (authError) authError.textContent = "Kullanıcı adı veya şifre hatalı.";
           return;

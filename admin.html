@@ -471,7 +471,8 @@
           <div class="field"><label>Project URL</label><input id="setupUrl" placeholder="https://xxxxx.supabase.co" autocomplete="off"></div>
           <div class="field"><label>anon public key</label><input id="setupKey" placeholder="eyJhbGciOi..." autocomplete="off"></div>
           <button class="btn" id="saveSetupBtn">💾 Bağlantıyı Kaydet</button>
-          <div class="info-box">Bu alanı bir kere doldurduktan sonra admin paneli Supabase veritabanına bağlanır. Sonradan değiştirmek için panelde “Bağlantı Ayarları” düğmesini kullanabilirsin.</div>
+          <button class="btn secondary" id="testSetupBtn" type="button">🧪 Bağlantıyı Test Et</button>
+          <div class="info-box" id="setupDebugBox">Bu alanı bir kere doldurduktan sonra admin paneli Supabase veritabanına bağlanır. Sonradan değiştirmek için panelde “Bağlantı Ayarları” düğmesini kullanabilirsin.</div>
         </div>
       </div>
     </div>
@@ -618,16 +619,35 @@
       setTimeout(() => toast.className = 'toast', 3400);
     }
 
+    function normalizeProjectUrl(value) {
+      let url = String(value || '').trim();
+      url = url.replace(/\s+/g, '');
+      url = url.replace(/\/rest\/v1\/?$/i, '');
+      url = url.replace(/\/+$/g, '');
+      return url;
+    }
+    function normalizeApiKey(value) {
+      return String(value || '').trim().replace(/\s+/g, '');
+    }
     function getConfig() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_CONFIG) || 'null'); } catch { return null; }
+      try {
+        const cfg = JSON.parse(localStorage.getItem(STORAGE_CONFIG) || 'null');
+        if (!cfg) return null;
+        cfg.url = normalizeProjectUrl(cfg.url);
+        cfg.key = normalizeApiKey(cfg.key);
+        return cfg;
+      } catch { return null; }
     }
     function saveConfig(url, key) {
-      localStorage.setItem(STORAGE_CONFIG, JSON.stringify({ url: url.trim(), key: key.trim() }));
+      localStorage.setItem(STORAGE_CONFIG, JSON.stringify({ url: normalizeProjectUrl(url), key: normalizeApiKey(key) }));
     }
     function initClient() {
       const cfg = getConfig();
       if (!cfg || !cfg.url || !cfg.key || !window.supabase) return false;
-      sb = window.supabase.createClient(cfg.url, cfg.key);
+      sb = window.supabase.createClient(cfg.url, cfg.key, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        global: { headers: { apikey: cfg.key, Authorization: 'Bearer ' + cfg.key } }
+      });
       return true;
     }
     function getSession() {
@@ -670,11 +690,63 @@
       confirmResolver = null;
     }
 
+    async function directRpc(name, args) {
+      const cfg = getConfig();
+      if (!cfg || !cfg.url || !cfg.key) throw new Error('Bağlantı bilgisi eksik.');
+      const response = await fetch(cfg.url + '/rest/v1/rpc/' + encodeURIComponent(name), {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          apikey: cfg.key,
+          Authorization: 'Bearer ' + cfg.key,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation'
+        },
+        body: JSON.stringify(args || {})
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status + ': ' + text.slice(0, 220));
+      }
+      return text ? JSON.parse(text) : null;
+    }
+
     async function rpc(name, args) {
-      if (!sb) throw new Error('Supabase bağlantısı yok.');
-      const { data, error } = await sb.rpc(name, args);
-      if (error) throw error;
-      return data;
+      if (!sb && !initClient()) throw new Error('Supabase bağlantısı yok.');
+      try {
+        const { data, error } = await sb.rpc(name, args);
+        if (error) throw error;
+        return data;
+      } catch (err) {
+        const msg = String(err && (err.message || err));
+        if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch')) {
+          return await directRpc(name, args);
+        }
+        throw err;
+      }
+    }
+
+    async function testSetupConnection() {
+      const url = normalizeProjectUrl(el('setupUrl').value);
+      const key = normalizeApiKey(el('setupKey').value);
+      if (!url || !key) return showToast('Project URL ve anon public key zorunlu.', 'error');
+      const debugBox = el('setupDebugBox');
+      try {
+        const response = await fetch(url + '/rest/v1/', {
+          method: 'GET',
+          mode: 'cors',
+          headers: { apikey: key, Authorization: 'Bearer ' + key }
+        });
+        const text = await response.text();
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Key reddedildi. Status: ' + response.status + ' - ' + text.slice(0, 160));
+        }
+        debugBox.textContent = 'Bağlantı testi başarılı. URL erişiliyor ve key gönderiliyor. Status: ' + response.status;
+        showToast('Bağlantı testi başarılı. Şimdi kaydet ve giriş dene.');
+      } catch (err) {
+        debugBox.textContent = 'Bağlantı testi başarısız: ' + (err.message || err);
+        showToast('Bağlantı testi başarısız: ' + (err.message || err), 'error');
+      }
     }
 
     async function loadUsers() {
@@ -895,6 +967,7 @@
       showToast('Bağlantı kaydedildi.');
       screen('login');
     });
+    el('testSetupBtn').addEventListener('click', testSetupConnection);
     el('openSetupFromLogin').addEventListener('click', () => {
       const cfg = getConfig();
       if (cfg) { el('setupUrl').value = cfg.url || ''; el('setupKey').value = cfg.key || ''; }
