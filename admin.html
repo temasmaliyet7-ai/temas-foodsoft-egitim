@@ -471,8 +471,7 @@
           <div class="field"><label>Project URL</label><input id="setupUrl" placeholder="https://xxxxx.supabase.co" autocomplete="off"></div>
           <div class="field"><label>anon public key</label><input id="setupKey" placeholder="eyJhbGciOi..." autocomplete="off"></div>
           <button class="btn" id="saveSetupBtn">💾 Bağlantıyı Kaydet</button>
-          <button class="btn secondary" id="testSetupBtn" type="button">🧪 Bağlantıyı Test Et</button>
-          <div class="info-box" id="setupDebugBox">Bu alanı bir kere doldurduktan sonra admin paneli Supabase veritabanına bağlanır. Sonradan değiştirmek için panelde “Bağlantı Ayarları” düğmesini kullanabilirsin.</div>
+          <div class="info-box">Bu alanı bir kere doldurduktan sonra admin paneli Supabase veritabanına bağlanır. Sonradan değiştirmek için panelde “Bağlantı Ayarları” düğmesini kullanabilirsin.</div>
         </div>
       </div>
     </div>
@@ -493,7 +492,7 @@
           <div class="field"><label>Admin Kullanıcı Adı</label><input id="loginUsername" placeholder="admin" autocomplete="username"></div>
           <div class="field"><label>Admin Şifre</label><input id="loginPassword" type="password" placeholder="••••" autocomplete="current-password"></div>
           <button class="btn" id="loginBtn">🔐 Giriş Yap</button>
-          <button class="btn secondary" id="openSetupFromLogin">⚙️ Bağlantı Ayarları</button>
+          <button class="btn secondary hidden" id="openSetupFromLogin" type="button" aria-hidden="true">⚙️ Bağlantı Ayarları</button>
           <div class="info-box">İlk giriş için: <b>admin</b> / <b>1234</b>. Daha sonra admin adını ve şifresini bu panelden değiştirebilirsin.</div>
         </div>
       </div>
@@ -521,7 +520,7 @@
             <button class="admin-chip" id="adminMenuBtn" type="button">👤 <span id="currentAdminText">admin</span> ▾</button>
             <div class="admin-dropdown" id="adminDropdown">
               <button type="button" id="editCurrentUserBtn">👤 Kullanıcı Düzenle</button>
-              <button type="button" id="setupBtn">⚙️ Bağlantı Ayarları</button>
+              <button type="button" id="setupBtn" class="hidden" aria-hidden="true">⚙️ Bağlantı Ayarları</button>
               <button type="button" id="logoutBtn">🚪 Oturumu Kapat</button>
             </div>
           </div>
@@ -594,8 +593,7 @@
   <script>
     const STORAGE_CONFIG = 'foodsoft_admin_supabase_config_v1';
     const STORAGE_SESSION = 'foodsoft_admin_session_v1';
-    const DEFAULT_SUPABASE_URL = 'https://dsyveddwsmermtrasigg.supabase.co';
-    const DEFAULT_SUPABASE_KEY = 'sb_publishable_xHrHPHpZO74LBGniAV8Oxg_C1rL46Pb';
+    const LOCAL_USERS_KEY = 'foodsoft_local_users_v1';
     let sb = null;
     let session = null;
     let users = [];
@@ -621,36 +619,16 @@
       setTimeout(() => toast.className = 'toast', 3400);
     }
 
-    function normalizeProjectUrl(value) {
-      let url = String(value || '').trim();
-      url = url.replace(/\s+/g, '');
-      url = url.replace(/\/rest\/v1\/?$/i, '');
-      url = url.replace(/\/+$/g, '');
-      return url;
-    }
-    function normalizeApiKey(value) {
-      return String(value || '').trim().replace(/\s+/g, '');
-    }
-    function defaultConfig() {
-      return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) };
-    }
     function getConfig() {
-      // GitHub Pages tarafında eski/yanlış localStorage bilgisi kalırsa giriş bozulmasın.
-      // Bu proje için doğru Supabase bağlantısını ana kaynak olarak kullanıyoruz.
-      return defaultConfig();
+      try { return JSON.parse(localStorage.getItem(STORAGE_CONFIG) || 'null'); } catch { return null; }
     }
     function saveConfig(url, key) {
-      const cfg = { url: normalizeProjectUrl(url || DEFAULT_SUPABASE_URL), key: normalizeApiKey(key || DEFAULT_SUPABASE_KEY) };
-      localStorage.setItem(STORAGE_CONFIG, JSON.stringify(cfg));
-      return cfg;
+      localStorage.setItem(STORAGE_CONFIG, JSON.stringify({ url: url.trim(), key: key.trim() }));
     }
     function initClient() {
       const cfg = getConfig();
       if (!cfg || !cfg.url || !cfg.key || !window.supabase) return false;
-      sb = window.supabase.createClient(cfg.url, cfg.key, {
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-        global: { headers: { apikey: cfg.key, Authorization: 'Bearer ' + cfg.key } }
-      });
+      sb = window.supabase.createClient(cfg.url, cfg.key);
       return true;
     }
     function getSession() {
@@ -693,54 +671,81 @@
       confirmResolver = null;
     }
 
-    async function directRpc(name, args) {
-      const cfg = getConfig();
-      if (!cfg || !cfg.url || !cfg.key) throw new Error('Bağlantı bilgisi eksik.');
-      const response = await fetch(cfg.url + '/rest/v1/rpc/' + encodeURIComponent(name), {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-          apikey: cfg.key,
-          Authorization: 'Bearer ' + cfg.key,
-          'Content-Type': 'application/json',
-          Prefer: 'return=representation'
-        },
-        body: JSON.stringify(args || {})
-      });
-      const text = await response.text();
-      if (!response.ok) {
-        throw new Error('HTTP ' + response.status + ': ' + text.slice(0, 220));
-      }
-      return text ? JSON.parse(text) : null;
-    }
-
-    async function rpc(name, args) {
-      // CDN/Supabase client veya GitHub cache sorunlarına takılmamak için doğrudan REST RPC kullanıyoruz.
-      return await directRpc(name, args);
-    }
-
-    async function testSetupConnection() {
-      const url = normalizeProjectUrl(el('setupUrl').value);
-      const key = normalizeApiKey(el('setupKey').value);
-      if (!url || !key) return showToast('Project URL ve anon public key zorunlu.', 'error');
-      const debugBox = el('setupDebugBox');
+    function nowIso() { return new Date().toISOString(); }
+    function getLocalUsers() {
       try {
-        const response = await fetch(url + '/rest/v1/', {
-          method: 'GET',
-          mode: 'cors',
-          headers: { apikey: key, Authorization: 'Bearer ' + key }
-        });
-        const text = await response.text();
-        if (response.status === 401 || response.status === 403) {
-          throw new Error('Key reddedildi. Status: ' + response.status + ' - ' + text.slice(0, 160));
-        }
-        const adminCheck = await directRpc('admin_check', { p_admin_username: 'admin', p_admin_password: '1234' });
-        debugBox.textContent = 'Bağlantı testi başarılı. URL/key çalışıyor. admin_check sonucu: ' + JSON.stringify(adminCheck);
-        showToast('Bağlantı testi başarılı. admin_check sonucu: ' + JSON.stringify(adminCheck));
-      } catch (err) {
-        debugBox.textContent = 'Bağlantı testi başarısız: ' + (err.message || err);
-        showToast('Bağlantı testi başarısız: ' + (err.message || err), 'error');
+        const list = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || 'null');
+        if (Array.isArray(list) && list.length) return list;
+      } catch {}
+      const seeded = [{ username: 'admin', password: '1234', role: 'admin', active: true, last_login_at: null, updated_at: nowIso() }];
+      localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(seeded));
+      return seeded;
+    }
+    function saveLocalUsers(list) {
+      localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(list || []));
+    }
+    function publicUsers(list) {
+      return (list || []).map(({ password, ...u }) => u);
+    }
+    function validateLocalAdmin(username, password) {
+      const list = getLocalUsers();
+      const admin = list.find(u => String(u.username) === String(username) && String(u.password) === String(password) && u.role === 'admin' && u.active === true);
+      if (!admin) throw new Error('Admin kullanıcı adı veya şifre hatalı.');
+      return { list, admin };
+    }
+    async function localRpc(name, args = {}) {
+      if (name === 'admin_list_users') {
+        const { list, admin } = validateLocalAdmin(args.p_admin_username, args.p_admin_password);
+        admin.last_login_at = nowIso();
+        admin.updated_at = admin.updated_at || nowIso();
+        saveLocalUsers(list);
+        return publicUsers(list);
       }
+      if (name === 'admin_create_user') {
+        const { list } = validateLocalAdmin(args.p_admin_username, args.p_admin_password);
+        const username = String(args.p_username || '').trim();
+        const password = String(args.p_password || '');
+        if (!username || !password) throw new Error('Kullanıcı adı ve şifre zorunlu.');
+        if (list.some(u => String(u.username).toLocaleLowerCase('tr') === username.toLocaleLowerCase('tr'))) throw new Error('Bu kullanıcı adı zaten var.');
+        list.push({ username, password, role: args.p_role || 'user', active: args.p_active !== false, last_login_at: null, updated_at: nowIso() });
+        saveLocalUsers(list);
+        return true;
+      }
+      if (name === 'admin_update_user') {
+        const { list } = validateLocalAdmin(args.p_admin_username, args.p_admin_password);
+        const target = list.find(u => String(u.username) === String(args.p_target_username));
+        if (!target) throw new Error('Kullanıcı bulunamadı.');
+        if (target.role === 'admin' && args.p_new_active === false) throw new Error('Admin pasif yapılamaz.');
+        if (args.p_new_username) {
+          const newUsername = String(args.p_new_username).trim();
+          const exists = list.some(u => u !== target && String(u.username).toLocaleLowerCase('tr') === newUsername.toLocaleLowerCase('tr'));
+          if (exists) throw new Error('Bu kullanıcı adı zaten var.');
+          target.username = newUsername;
+        }
+        if (args.p_new_password) target.password = String(args.p_new_password);
+        if (args.p_new_role && target.role !== 'admin') target.role = args.p_new_role;
+        if (typeof args.p_new_active === 'boolean' && target.role !== 'admin') target.active = args.p_new_active;
+        target.updated_at = nowIso();
+        saveLocalUsers(list);
+        return true;
+      }
+      if (name === 'admin_delete_user') {
+        const { list } = validateLocalAdmin(args.p_admin_username, args.p_admin_password);
+        const target = list.find(u => String(u.username) === String(args.p_target_username));
+        if (!target) throw new Error('Kullanıcı bulunamadı.');
+        if (target.role === 'admin') throw new Error('Admin kullanıcısı silinemez.');
+        saveLocalUsers(list.filter(u => u !== target));
+        return true;
+      }
+      throw new Error('Yerel modda desteklenmeyen işlem: ' + name);
+    }
+    async function rpc(name, args) {
+      if (sb) {
+        const { data, error } = await sb.rpc(name, args);
+        if (error) throw error;
+        return data;
+      }
+      return localRpc(name, args);
     }
 
     async function loadUsers() {
@@ -953,17 +958,14 @@
     }
 
     el('saveSetupBtn').addEventListener('click', () => {
-      const url = el('setupUrl').value || DEFAULT_SUPABASE_URL;
-      const key = el('setupKey').value || DEFAULT_SUPABASE_KEY;
-      const cfg = saveConfig(url, key);
-      el('setupUrl').value = cfg.url;
-      el('setupKey').value = cfg.key;
-      if (!cfg.url || !cfg.key) return showToast('Project URL ve anon public key zorunlu.', 'error');
+      const url = el('setupUrl').value;
+      const key = el('setupKey').value;
+      if (!url.trim() || !key.trim()) return showToast('Project URL ve anon public key zorunlu.', 'error');
+      saveConfig(url, key);
       initClient();
       showToast('Bağlantı kaydedildi.');
       screen('login');
     });
-    if (el('testSetupBtn')) el('testSetupBtn').addEventListener('click', testSetupConnection);
     el('openSetupFromLogin').addEventListener('click', () => {
       const cfg = getConfig();
       if (cfg) { el('setupUrl').value = cfg.url || ''; el('setupKey').value = cfg.key || ''; }
@@ -980,26 +982,13 @@
       const password = el('loginPassword').value;
       if (!username || !password) return showToast('Admin kullanıcı adı ve şifre gir.', 'error');
       try {
-        // Önce sadece admin doğrulamasını yapıyoruz. Böylece kullanıcı listeleme tarafındaki
-        // bir hata, doğru admin girişini "giriş başarısız" gibi göstermesin.
-        const ok = await rpc('admin_check', { p_admin_username: username, p_admin_password: password });
-        const isAdminOk = ok === true || ok === 'true' || (Array.isArray(ok) && (ok[0] === true || ok[0] === 'true'));
-        if (!isAdminOk) throw new Error('Admin kullanıcı adı veya şifre hatalı.');
-
+        const data = await rpc('admin_list_users', { p_admin_username: username, p_admin_password: password });
         saveSession(username, password);
+        users = data || [];
+        renderUsers();
         el('currentAdminText').textContent = username;
         screen('app');
-        showToast('Admin girişi başarılı. Kullanıcı listesi alınıyor...');
-
-        try {
-          users = await rpc('admin_list_users', { p_admin_username: username, p_admin_password: password }) || [];
-          renderUsers();
-          showToast('Admin panel hazır.');
-        } catch (listErr) {
-          users = [];
-          renderUsers();
-          showToast('Giriş başarılı ama kullanıcı listesi alınamadı: ' + (listErr.message || listErr), 'error');
-        }
+        showToast('Admin girişi başarılı.');
       } catch (err) { showToast('Giriş başarısız: ' + (err.message || err), 'error'); }
     });
     el('editCurrentUserBtn').addEventListener('click', () => { el('adminDropdown').classList.remove('show'); editCurrentUser(); });
@@ -1060,10 +1049,12 @@
 
     (function start() {
       const cfg = getConfig();
-      saveConfig(cfg.url, cfg.key);
-      el('setupUrl').value = cfg.url || '';
-      el('setupKey').value = cfg.key || '';
-      if (!initClient()) { screen('setup'); return; }
+      if (cfg) {
+        el('setupUrl').value = cfg.url || '';
+        el('setupKey').value = cfg.key || '';
+        initClient();
+      }
+      getLocalUsers();
       session = getSession();
       if (session && session.username && session.password) { screen('app'); loadUsers(); }
       else { screen('login'); }

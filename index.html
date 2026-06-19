@@ -2230,54 +2230,20 @@
     }
 
     const SUPABASE_CONFIG_KEY = "foodsoft_admin_supabase_config_v1";
-    const DEFAULT_SUPABASE_URL = "https://dsyveddwsmermtrasigg.supabase.co";
-    const DEFAULT_SUPABASE_KEY = "sb_publishable_xHrHPHpZO74LBGniAV8Oxg_C1rL46Pb";
+    const LOCAL_USERS_KEY = "foodsoft_local_users_v1";
     let loginSupabaseClient = null;
 
-    function normalizeProjectUrl(value) {
-      let url = String(value || '').trim();
-      url = url.replace(/\s+/g, '');
-      url = url.replace(/\/rest\/v1\/?$/i, '');
-      url = url.replace(/\/+$/g, '');
-      return url;
-    }
-    function normalizeApiKey(value) {
-      return String(value || '').trim().replace(/\s+/g, '');
-    }
-
     function getSupabaseConfig() {
-      // Kullanıcı paneli de eski/yanlış tarayıcı kaydına takılmasın; doğru proje bağlantısını kullanır.
-      return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) };
+      try { return JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || "null"); }
+      catch (e) { return null; }
     }
 
     function getLoginSupabaseClient() {
       if (loginSupabaseClient) return loginSupabaseClient;
       const cfg = getSupabaseConfig();
       if (!cfg || !cfg.url || !cfg.key || !window.supabase) return null;
-      loginSupabaseClient = window.supabase.createClient(cfg.url, cfg.key, {
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-        global: { headers: { apikey: cfg.key, Authorization: 'Bearer ' + cfg.key } }
-      });
+      loginSupabaseClient = window.supabase.createClient(cfg.url, cfg.key);
       return loginSupabaseClient;
-    }
-
-    async function directLoginRpc(username, password) {
-      const cfg = getSupabaseConfig();
-      if (!cfg || !cfg.url || !cfg.key) throw new Error('Supabase bağlantısı bulunamadı.');
-      const response = await fetch(cfg.url + '/rest/v1/rpc/app_login', {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-          apikey: cfg.key,
-          Authorization: 'Bearer ' + cfg.key,
-          'Content-Type': 'application/json',
-          Prefer: 'return=representation'
-        },
-        body: JSON.stringify({ p_username: username, p_password: password })
-      });
-      const text = await response.text();
-      if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + text.slice(0, 220));
-      return text ? JSON.parse(text) : [];
     }
 
     async function handleUserAuth(event) {
@@ -2295,9 +2261,25 @@
         authSubmit.textContent = "Kontrol ediliyor...";
       }
       try {
-        let data;
-        data = await directLoginRpc(username, password);
-        if (!Array.isArray(data) || data.length === 0) {
+        if (client) {
+          const { data, error } = await client.rpc("app_login", { p_username: username, p_password: password });
+          if (error) throw error;
+          if (!Array.isArray(data) || data.length === 0) {
+            if (authError) authError.textContent = "Kullanıcı adı veya şifre hatalı.";
+            return;
+          }
+          unlockDemoAuth();
+          return;
+        }
+
+        const localUsers = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || "[]");
+        const localUser = Array.isArray(localUsers) ? localUsers.find(u =>
+          String(u.username) === String(username) &&
+          String(u.password) === String(password) &&
+          u.role !== "admin" &&
+          u.active === true
+        ) : null;
+        if (!localUser) {
           if (authError) authError.textContent = "Kullanıcı adı veya şifre hatalı.";
           return;
         }
