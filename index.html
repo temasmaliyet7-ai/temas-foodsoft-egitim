@@ -2230,6 +2230,8 @@
     }
 
     const SUPABASE_CONFIG_KEY = "foodsoft_admin_supabase_config_v1";
+    const DEFAULT_SUPABASE_URL = "https://dsyveddwsmermtrasigg.supabase.co";
+    const DEFAULT_SUPABASE_KEY = "sb_publishable_xHrHPHpZO74LBGniAV8Oxg_C1rL46Pb";
     let loginSupabaseClient = null;
 
     function normalizeProjectUrl(value) {
@@ -2245,12 +2247,14 @@
 
     function getSupabaseConfig() {
       try {
-        const cfg = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || "null");
-        if (!cfg) return null;
-        cfg.url = normalizeProjectUrl(cfg.url);
-        cfg.key = normalizeApiKey(cfg.key);
-        return cfg;
-      } catch (e) { return null; }
+        const saved = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || "null") || {};
+        return {
+          url: normalizeProjectUrl(saved.url || DEFAULT_SUPABASE_URL),
+          key: normalizeApiKey(saved.key || DEFAULT_SUPABASE_KEY)
+        };
+      } catch (e) {
+        return { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_KEY };
+      }
     }
 
     function getLoginSupabaseClient() {
