@@ -18,3 +18,12 @@ Yeni eğitim/içerik eklendiğinde bildirim:
 Önemli:
 - index.html içindeki "KALICI OTOMATIK GUNCELLEME CEKIRDEGI - DOKUNMA" bloğunu silme.
 - Aynı GitHub/Netlify linki kullanılmaya devam eder.
+
+
+--- KALICI HIZ / AKILLI ON YUKLEME NOTU ---
+Bu projede sayfa geçişlerini hızlandıran akıllı ön yükleme çekirdeği vardır.
+Tüm PNG sayfaları aynı anda yüklenmez; yalnızca mevcut sayfanın bir önceki ve bir sonraki sayfası arkada hazırlanır.
+Görsel kaliteyi bozmaz. Yeni eğitim/tasarım/giriş sistemi eklerken index.html içindeki:
+- KALICI HIZ CEKIRDEGI - DOKUNMA
+- KALICI AKILLI ON YUKLEME CEKIRDEGI - DOKUNMA
+bloklarını silme/değiştirme.

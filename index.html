@@ -9,6 +9,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Foodsoft Eğitim Programı</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       color-scheme: light dark;
@@ -1808,6 +1809,57 @@
       body { padding: 0 !important; }
     }
 
+
+    /* DARK MODE FOODSOFT LOGO KARARMA ENGELİ - sadece logo alanları */
+    .auth-logo-chip,
+    .brand,
+    .right-logo-box,
+    .auth-logo-chip img,
+    .top-temas-logo,
+    .right-logo {
+      filter: none !important;
+      -webkit-filter: none !important;
+      mix-blend-mode: normal !important;
+      opacity: 1 !important;
+      color-scheme: only light !important;
+      forced-color-adjust: none !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      isolation: isolate !important;
+    }
+
+    .auth-logo-chip,
+    .brand {
+      background: rgb(54,195,248) !important;
+      background-color: rgb(54,195,248) !important;
+    }
+
+    .right-logo-box {
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .auth-logo-chip,
+      .brand {
+        background: rgb(54,195,248) !important;
+        background-color: rgb(54,195,248) !important;
+      }
+
+      .right-logo-box {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+      }
+
+      .auth-logo-chip img,
+      .top-temas-logo,
+      .right-logo {
+        filter: none !important;
+        -webkit-filter: none !important;
+        mix-blend-mode: normal !important;
+      }
+    }
+
   </style>
 </head>
 
@@ -1837,7 +1889,7 @@
         </div>
       </div>
 
-      <button class="auth-submit" id="authSubmit" type="submit" onclick="document.body.classList.remove('auth-locked');var s=document.getElementById('authScreen');if(s){s.hidden=true;s.style.display='none';s.style.visibility='hidden';s.style.pointerEvents='none';}return false;">Giriş Yap</button>
+      <button class="auth-submit" id="authSubmit" type="submit">Giriş Yap</button>
       <p class="auth-error" id="authError" aria-live="polite"></p>
       <p class="auth-footnote">Temaş Catering · Eğitim erişim ekranı</p>
     </form>
@@ -1964,7 +2016,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "auto-20260619-core-update-permanent-01";
+    const APP_VERSION = "auto-20260619-smart-preload-core-01";
     let latestAssetVersion = APP_VERSION;
 
     /*
@@ -1979,7 +2031,10 @@
 
     function withVersion(path) {
       if (!path || path.startsWith("data:")) return path;
-      const cacheBuster = latestAssetVersion + "-" + Date.now();
+      // KALICI HIZ CEKIRDEGI - DOKUNMA:
+      // Görseller her açılışta farklı Date.now ile çağrılmaz.
+      // Aynı version değeri boyunca tarayıcı cache kullanır; version.json değişince yeni dosyalar çekilir.
+      const cacheBuster = latestAssetVersion;
       return path + (path.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(cacheBuster);
     }
 
@@ -2017,7 +2072,57 @@
       if (!imgElement || !path) return;
       imgElement.dataset.rawSrc = path;
       imgElement.dataset.retryDone = "0";
+      imgElement.decoding = "async";
       imgElement.src = useVersion ? withVersion(path) : path;
+    }
+
+    // KALICI AKILLI ON YUKLEME CEKIRDEGI - DOKUNMA:
+    // Tüm eğitim sayfalarını aynı anda yüklemez. Sadece mevcut sayfanın bir önceki ve bir sonraki görselini hazırlar.
+    // Bu sayede kalite bozulmadan sayfa geçişleri hızlanır, telefon gereksiz yorulmaz.
+    const SMART_PRELOAD_CACHE = new Map();
+    let smartPreloadTimer = null;
+
+    function getPreloadKey(path) {
+      return String(path || "") + "::" + String(latestAssetVersion || APP_VERSION);
+    }
+
+    function preloadTrainingImage(path) {
+      if (!path) return;
+      const key = getPreloadKey(path);
+      if (SMART_PRELOAD_CACHE.has(key)) return;
+
+      const img = new Image();
+      img.decoding = "async";
+      img.loading = "eager";
+      img.src = withVersion(path);
+      SMART_PRELOAD_CACHE.set(key, img);
+
+      // Belleği şişirmemek için cache'i küçük tut.
+      if (SMART_PRELOAD_CACHE.size > 8) {
+        const firstKey = SMART_PRELOAD_CACHE.keys().next().value;
+        SMART_PRELOAD_CACHE.delete(firstKey);
+      }
+    }
+
+    function smartPreloadNearbyPages() {
+      if (!activeTraining || !Array.isArray(activeTraining.pages)) return;
+
+      const pages = activeTraining.pages;
+      const currentIndex = currentPage - 1;
+      const nearby = [
+        pages[currentIndex - 1],
+        pages[currentIndex + 1]
+      ].filter(Boolean);
+
+      window.clearTimeout(smartPreloadTimer);
+      smartPreloadTimer = window.setTimeout(() => {
+        const run = () => nearby.forEach(preloadTrainingImage);
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(run, { timeout: 600 });
+        } else {
+          run();
+        }
+      }, 120);
     }
 
     function refreshVisibleImages() {
@@ -2025,6 +2130,7 @@
       const currentSrc = activeTraining.pages[currentPage - 1];
       setImageSource(pageImage, currentSrc);
       setImageSource(fullscreenImage, currentSrc);
+      smartPreloadNearbyPages();
     }
 
     function applyVersionData(data) {
@@ -2037,6 +2143,7 @@
         const latestVersion = String(data.version);
         if (latestVersion && latestVersion !== latestAssetVersion) {
           latestAssetVersion = latestVersion;
+          SMART_PRELOAD_CACHE.clear();
           refreshVisibleImages();
           forceFreshAppReload(latestVersion);
           return;
@@ -2122,17 +2229,60 @@
       requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
     }
 
-    function handleDemoAuth(event) {
+    const SUPABASE_CONFIG_KEY = "foodsoft_admin_supabase_config_v1";
+    let loginSupabaseClient = null;
+
+    function getSupabaseConfig() {
+      try { return JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || "null"); }
+      catch (e) { return null; }
+    }
+
+    function getLoginSupabaseClient() {
+      if (loginSupabaseClient) return loginSupabaseClient;
+      const cfg = getSupabaseConfig();
+      if (!cfg || !cfg.url || !cfg.key || !window.supabase) return null;
+      loginSupabaseClient = window.supabase.createClient(cfg.url, cfg.key);
+      return loginSupabaseClient;
+    }
+
+    async function handleUserAuth(event) {
       if (event) event.preventDefault();
-      unlockDemoAuth();
+      if (authError) authError.textContent = "";
+      const username = authUser ? authUser.value.trim() : "";
+      const password = authPass ? authPass.value : "";
+      if (!username || !password) {
+        if (authError) authError.textContent = "Kullanıcı adı ve şifre giriniz.";
+        return;
+      }
+      const client = getLoginSupabaseClient();
+      if (!client) {
+        if (authError) authError.textContent = "Supabase bağlantısı bulunamadı. Önce admin panelinde bağlantı ayarlarını kaydediniz.";
+        return;
+      }
+      if (authSubmit) {
+        authSubmit.disabled = true;
+        authSubmit.textContent = "Kontrol ediliyor...";
+      }
+      try {
+        const { data, error } = await client.rpc("app_login", { p_username: username, p_password: password });
+        if (error) throw error;
+        if (!Array.isArray(data) || data.length === 0) {
+          if (authError) authError.textContent = "Kullanıcı adı veya şifre hatalı.";
+          return;
+        }
+        unlockDemoAuth();
+      } catch (err) {
+        if (authError) authError.textContent = "Giriş başarısız: " + (err.message || err);
+      } finally {
+        if (authSubmit) {
+          authSubmit.disabled = false;
+          authSubmit.textContent = "Giriş Yap";
+        }
+      }
     }
 
     if (authForm) {
-      authForm.addEventListener("submit", handleDemoAuth);
-    }
-
-    if (authSubmit) {
-      authSubmit.addEventListener("click", handleDemoAuth);
+      authForm.addEventListener("submit", handleUserAuth);
     }
 
     if (authTogglePass && authPass) {
@@ -2276,6 +2426,7 @@
 
     function selectTraining(id) {
       activeTraining = trainings.find(t => t.id === id);
+      SMART_PRELOAD_CACHE.clear();
       currentPage = 1;
       home.style.display = "none";
       document.body.classList.remove("home-active");
@@ -2316,6 +2467,8 @@
         nextBtn.disabled = isLastPage;
         fullscreenPrevBtn.disabled = isFirstPage;
         fullscreenNextBtn.disabled = isLastPage;
+
+        smartPreloadNearbyPages();
       }, 70);
     }
 

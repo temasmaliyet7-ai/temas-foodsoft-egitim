@@ -1,0 +1,234 @@
+-- Foodsoft Admin Paneli güncelleme SQL'i
+-- Bunu Supabase > SQL Editor içinde 1 kere çalıştır.
+-- Amaç: Kullanıcı paneli girişini admin oturumundan tamamen bağımsız yapmak.
+-- Not: index.html sadece role = user ve active = true olan hesapları kabul eder; adminin giriş yapmış/aktif olması gerekmez.
+
+create extension if not exists pgcrypto;
+
+alter table public.app_users
+add column if not exists last_login_at timestamptz;
+
+create or replace function public.app_login(
+  p_username text,
+  p_password text
+)
+returns table (
+  id uuid,
+  username text,
+  role text,
+  active boolean
+)
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  return query
+  update public.app_users u
+  set last_login_at = now(),
+      updated_at = now()
+  where u.username = p_username
+    and u.password_hash = crypt(p_password, u.password_hash)
+    and u.active = true
+    and u.role = 'user'
+  returning u.id, u.username, u.role, u.active;
+end;
+$$;
+
+create or replace function public.admin_check(
+  p_admin_username text,
+  p_admin_password text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_ok boolean;
+begin
+  select exists (
+    select 1
+    from public.app_users u
+    where u.username = p_admin_username
+      and u.password_hash = crypt(p_admin_password, u.password_hash)
+      and u.active = true
+      and u.role = 'admin'
+  )
+  into v_ok;
+
+  return v_ok;
+end;
+$$;
+
+create or replace function public.admin_list_users(
+  p_admin_username text,
+  p_admin_password text
+)
+returns table (
+  id uuid,
+  username text,
+  role text,
+  active boolean,
+  last_login_at timestamptz,
+  updated_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not public.admin_check(p_admin_username, p_admin_password) then
+    raise exception 'Yetkisiz işlem';
+  end if;
+
+  return query
+  select
+    u.id,
+    u.username,
+    u.role,
+    u.active,
+    u.last_login_at,
+    u.updated_at
+  from public.app_users u
+  order by u.username asc;
+end;
+$$;
+
+create or replace function public.admin_create_user(
+  p_admin_username text,
+  p_admin_password text,
+  p_username text,
+  p_password text,
+  p_role text default 'user',
+  p_active boolean default true
+)
+returns table (
+  id uuid,
+  username text,
+  role text,
+  active boolean
+)
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not public.admin_check(p_admin_username, p_admin_password) then
+    raise exception 'Yetkisiz işlem';
+  end if;
+
+  if trim(p_username) = '' or trim(p_password) = '' then
+    raise exception 'Kullanıcı adı ve şifre boş olamaz';
+  end if;
+
+  if p_role not in ('admin', 'user') then
+    raise exception 'Geçersiz rol';
+  end if;
+
+  return query
+  insert into public.app_users (
+    username,
+    password_hash,
+    role,
+    active
+  )
+  values (
+    trim(p_username),
+    crypt(p_password, gen_salt('bf')),
+    p_role,
+    true
+  )
+  returning app_users.id, app_users.username, app_users.role, app_users.active;
+end;
+$$;
+
+create or replace function public.admin_update_user(
+  p_admin_username text,
+  p_admin_password text,
+  p_target_username text,
+  p_new_username text default null,
+  p_new_password text default null,
+  p_new_role text default null,
+  p_new_active boolean default null
+)
+returns table (
+  id uuid,
+  username text,
+  role text,
+  active boolean
+)
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_target_role text;
+begin
+  if not public.admin_check(p_admin_username, p_admin_password) then
+    raise exception 'Yetkisiz işlem';
+  end if;
+
+  select u.role into v_target_role
+  from public.app_users u
+  where u.username = p_target_username;
+
+  if v_target_role is null then
+    raise exception 'Kullanıcı bulunamadı';
+  end if;
+
+  if p_new_role is not null and p_new_role not in ('admin', 'user') then
+    raise exception 'Geçersiz rol';
+  end if;
+
+  if v_target_role = 'admin' and p_new_active = false then
+    raise exception 'Admin hesabı pasif yapılamaz';
+  end if;
+
+  if v_target_role = 'admin' and p_new_role is not null and p_new_role <> 'admin' then
+    raise exception 'Admin rolü kullanıcıya çevrilemez';
+  end if;
+
+  return query
+  update public.app_users u
+  set
+    username = coalesce(nullif(trim(p_new_username), ''), u.username),
+    password_hash = case
+      when p_new_password is not null and trim(p_new_password) <> ''
+      then crypt(p_new_password, gen_salt('bf'))
+      else u.password_hash
+    end,
+    role = coalesce(p_new_role, u.role),
+    active = case when u.role = 'admin' then true else coalesce(p_new_active, u.active) end,
+    updated_at = now()
+  where u.username = p_target_username
+  returning u.id, u.username, u.role, u.active;
+end;
+$$;
+
+create or replace function public.admin_delete_user(
+  p_admin_username text,
+  p_admin_password text,
+  p_target_username text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not public.admin_check(p_admin_username, p_admin_password) then
+    raise exception 'Yetkisiz işlem';
+  end if;
+
+  if exists (select 1 from public.app_users where username = p_target_username and role = 'admin') then
+    raise exception 'Admin hesabı silinemez';
+  end if;
+
+  delete from public.app_users
+  where username = p_target_username
+    and role <> 'admin';
+
+  return true;
+end;
+$$;

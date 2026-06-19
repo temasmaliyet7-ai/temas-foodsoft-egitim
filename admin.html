@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Foodsoft Admin Paneli</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-0: #061017;
+      --bg-1: #081923;
+      --bg-2: #0d2733;
+      --card: rgba(14, 34, 43, .78);
+      --card-strong: rgba(18, 43, 54, .92);
+      --line: rgba(120, 216, 248, .18);
+      --line-strong: rgba(120, 216, 248, .34);
+      --text: #f5fbff;
+      --muted: #a9c1cb;
+      --soft: #d8eef6;
+      --accent: #45c6f0;
+      --accent-2: #1a9dcc;
+      --accent-3: #0a6c93;
+      --green: #36d77f;
+      --green-bg: rgba(54, 215, 127, .13);
+      --red: #ff5f6f;
+      --red-bg: rgba(255, 95, 111, .13);
+      --warn: #ffbe45;
+      --warn-bg: rgba(255, 190, 69, .13);
+      --shadow: 0 28px 90px rgba(0,0,0,.48);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; min-height: 100%; font-family: Arial, Helvetica, sans-serif; background: var(--bg-0); color: var(--text); }
+    body {
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(69,198,240,.22), transparent 28%),
+        radial-gradient(circle at 90% 18%, rgba(26,157,204,.18), transparent 30%),
+        radial-gradient(circle at 55% 105%, rgba(69,198,240,.10), transparent 34%),
+        linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 44%, #051018 100%);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("assets/background-logo.png?v=38");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: min(62vw, 560px);
+      opacity: .045;
+      pointer-events: none;
+      z-index: 0;
+      filter: drop-shadow(0 0 60px rgba(69,198,240,.08));
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, rgba(0,0,0,.9), transparent 72%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app { position: relative; z-index: 1; min-height: 100vh; display: grid; grid-template-columns: 260px minmax(0, 1fr); }
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 22px 16px;
+      border-right: 1px solid var(--line);
+      background: rgba(6, 16, 23, .70);
+      backdrop-filter: blur(22px);
+      box-shadow: 18px 0 70px rgba(0,0,0,.22);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 10px 10px 22px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand-logo {
+      width: 74px;
+      height: 54px;
+      border-radius: 17px;
+      background: rgb(54,195,248) !important;
+      background-color: rgb(54,195,248) !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      box-shadow: 0 18px 44px rgba(0,0,0,.28), 0 0 0 1px rgba(69,198,240,.30);
+      overflow: hidden;
+      isolation: isolate;
+      color-scheme: only light !important;
+      forced-color-adjust: none !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .brand-logo img { width: 100%; height: 100%; object-fit: contain; filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; opacity: 1 !important; color-scheme: only light !important; forced-color-adjust: none !important; }
+
+    @media (prefers-color-scheme: dark) {
+      .brand-logo {
+        background: rgb(54,195,248) !important;
+        background-color: rgb(54,195,248) !important;
+      }
+      .brand-logo img {
+        filter: none !important;
+        -webkit-filter: none !important;
+        mix-blend-mode: normal !important;
+        opacity: 1 !important;
+      }
+    }
+    .brand-title { min-width: 0; }
+    .brand-title strong { display: block; font-size: 20px; letter-spacing: -.02em; }
+    .brand-title span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+
+    .nav { display: grid; gap: 9px; padding: 18px 0; }
+    .nav button {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--soft);
+      border-radius: 15px;
+      padding: 13px 14px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+      transition: .16s ease;
+    }
+    .nav button.active, .nav button:hover {
+      background: linear-gradient(135deg, rgba(69,198,240,.22), rgba(26,157,204,.12));
+      border-color: var(--line-strong);
+      box-shadow: 0 14px 34px rgba(0,0,0,.18);
+      color: #fff;
+    }
+    .side-note {
+      margin-top: auto;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.035);
+      border-radius: 18px;
+      padding: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .main { min-width: 0; padding: 22px; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 18px;
+      margin: -22px -22px 22px;
+      background: rgba(7, 20, 26, .76);
+      backdrop-filter: blur(22px);
+      border-bottom: 1px solid var(--line);
+    }
+    .top-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .menu-btn { display: none; border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--text); border-radius: 13px; height: 42px; width: 42px; cursor: pointer; }
+    .page-title h1 { margin: 0; font-size: clamp(22px, 3vw, 32px); letter-spacing: -.04em; }
+    .page-title p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .admin-menu { position: relative; }
+    .admin-chip {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding: 10px 13px;
+      border-radius: 999px;
+      color: var(--soft);
+      font-weight: 800;
+      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform .14s ease, border-color .14s ease, background .14s ease;
+    }
+    .admin-chip:hover { transform: translateY(-1px); border-color: rgba(69,198,240,.32); background: rgba(69,198,240,.07); }
+    .admin-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 210px;
+      border: 1px solid rgba(120,216,248,.20);
+      border-radius: 18px;
+      background: rgba(9, 24, 31, .96);
+      box-shadow: var(--shadow);
+      padding: 8px;
+      display: none;
+      z-index: 20;
+    }
+    .admin-dropdown.show { display: grid; gap: 6px; }
+    .admin-dropdown button {
+      width: 100%;
+      border: 0;
+      border-radius: 13px;
+      background: transparent;
+      color: var(--text);
+      padding: 12px 12px;
+      text-align: left;
+      font-weight: 850;
+      cursor: pointer;
+    }
+    .admin-dropdown button:hover { background: rgba(69,198,240,.10); }
+
+    .grid { display: grid; gap: 20px; }
+    .card {
+      background: linear-gradient(145deg, rgba(18,43,54,.82), rgba(9,24,32,.72));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(circle at top left, rgba(69,198,240,.16), transparent 36%);
+      pointer-events: none;
+    }
+    .card-inner { position: relative; z-index: 1; padding: 24px; }
+    .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+    .section-title { display: flex; gap: 12px; align-items: flex-start; }
+    .section-icon { width: 42px; height: 42px; border-radius: 15px; display: grid; place-items: center; background: rgba(69,198,240,.15); border: 1px solid var(--line); color: var(--accent); font-size: 21px; }
+    .section-title h2 { margin: 0; font-size: 24px; letter-spacing: -.035em; }
+    .section-title p { margin: 6px 0 0; color: var(--muted); line-height: 1.45; }
+
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      min-height: 46px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 15px 34px rgba(26,157,204,.28);
+      transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+      white-space: nowrap;
+    }
+    .btn:hover { filter: brightness(1.07); }
+    .btn:active { transform: translateY(1px) scale(.99); }
+    .btn.secondary { background: rgba(255,255,255,.08); box-shadow: none; border: 1px solid var(--line); color: var(--soft); }
+    .btn.danger { background: linear-gradient(135deg, #ff6676, #d93649); box-shadow: 0 15px 34px rgba(217,54,73,.24); }
+    .btn.warn { background: linear-gradient(135deg, #ffc145, #e69713); color: #1b1306; box-shadow: 0 15px 34px rgba(230,151,19,.22); }
+    .btn.ghost { min-height: 40px; padding: 0 12px; background: rgba(255,255,255,.055); box-shadow: none; border: 1px solid var(--line); }
+    .btn.icon { width: 42px; padding: 0; }
+    .btn[disabled] { opacity: .48; cursor: not-allowed; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.035); }
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    th, td { padding: 15px 14px; text-align: left; border-bottom: 1px solid rgba(120,216,248,.11); }
+    th { color: #eaf8fd; font-size: 13px; background: rgba(255,255,255,.045); letter-spacing: .01em; }
+    td { color: var(--soft); font-size: 14px; }
+    tr:last-child td { border-bottom: 0; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 900; }
+    .badge.admin { color: #ffffff; background: rgba(69,198,240,.22); border: 1px solid rgba(69,198,240,.30); }
+    .badge.user { color: #d7edf5; background: rgba(255,255,255,.065); border: 1px solid rgba(255,255,255,.10); }
+    .badge.active { color: #a7ffd0; background: var(--green-bg); border: 1px solid rgba(54,215,127,.28); }
+    .badge.passive { color: #ffd1d6; background: var(--red-bg); border: 1px solid rgba(255,95,111,.28); }
+
+    .status-switch {
+      --knob-x: 0px;
+      width: 50px;
+      height: 28px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      padding: 2px;
+      position: relative;
+      cursor: grab;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      background: linear-gradient(135deg, rgba(255,95,111,.92), rgba(178,44,58,.88));
+      box-shadow: inset 0 1px 5px rgba(0,0,0,.35), 0 8px 20px rgba(0,0,0,.18);
+      transition: background .24s ease, box-shadow .24s ease, transform .14s ease;
+      vertical-align: middle;
+    }
+    .status-switch::before {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,255,255,.16), rgba(255,255,255,.04));
+      opacity: .55;
+      pointer-events: none;
+    }
+    .status-switch::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffffff, #d9f5ff);
+      box-shadow: 0 5px 14px rgba(0,0,0,.34), inset 0 -1px 2px rgba(0,0,0,.10);
+      transform: translateX(var(--knob-x));
+      transition: transform .34s cubic-bezier(.18, 1.45, .25, 1), box-shadow .2s ease;
+    }
+    .status-switch.active {
+      --knob-x: 22px;
+      background: linear-gradient(135deg, rgba(54,215,127,.96), rgba(21,151,80,.90));
+      box-shadow: inset 0 1px 5px rgba(0,0,0,.24), 0 0 18px rgba(54,215,127,.18);
+    }
+    .status-switch:hover { transform: translateY(-1px); }
+    .status-switch:active { cursor: grabbing; transform: translateY(-1px); }
+    .status-switch.dragging::after { transition: none; box-shadow: 0 6px 17px rgba(0,0,0,.42), inset 0 -1px 2px rgba(0,0,0,.10); }
+    .status-switch.busy { opacity: .72; pointer-events: none; }
+    .protected-text { color: var(--accent); font-weight: 800; font-size: 12px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .status-head { display: inline-flex; align-items: center; justify-content: flex-start; gap: 8px; white-space: nowrap; }
+    .status-filter { display: inline-flex; align-items: center; }
+    .status-filter select {
+      min-height: 28px;
+      width: 78px;
+      border-radius: 9px;
+      padding: 0 7px;
+      font-size: 11px;
+      font-weight: 850;
+      background: rgba(7, 20, 26, .74);
+      border: 1px solid rgba(120,216,248,.24);
+      color: #eaf8fd;
+    }
+    .th-stack { display: grid; gap: 8px; align-items: start; }
+    .header-search {
+      min-height: 30px;
+      width: 170px;
+      max-width: 100%;
+      border-radius: 10px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 750;
+      background: rgba(7, 20, 26, .72);
+      border: 1px solid rgba(120,216,248,.24);
+      color: #eaf8fd;
+    }
+    .header-search::placeholder { color: rgba(234,248,253,.45); }
+
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .field { display: grid; gap: 8px; }
+    .field label { color: #ecf9ff; font-weight: 800; font-size: 13px; }
+    input, select {
+      width: 100%;
+      min-height: 50px;
+      border-radius: 14px;
+      border: 1px solid rgba(120,216,248,.20);
+      background: rgba(7, 20, 26, .55);
+      color: var(--text);
+      padding: 0 14px;
+      outline: none;
+      font-size: 15px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+    }
+    input:focus, select:focus { border-color: rgba(69,198,240,.58); box-shadow: 0 0 0 4px rgba(69,198,240,.10); }
+    select option { background: #0b1b23; color: #fff; }
+    .form-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+    .info-box { margin-top: 20px; border: 1px solid rgba(69,198,240,.26); border-radius: 18px; background: rgba(69,198,240,.08); padding: 15px 16px; color: #cceefa; line-height: 1.45; }
+
+    .login-screen, .setup-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      position: relative;
+      z-index: 2;
+    }
+    .login-card { width: min(100%, 500px); }
+    .login-card .brand { border: 0; justify-content: center; padding-bottom: 8px; }
+    .login-card .card-inner { padding: 28px; }
+    .login-title { text-align: center; margin: 12px 0 24px; }
+    .login-title h1 { margin: 0; font-size: 28px; letter-spacing: -.04em; }
+    .login-title p { margin: 8px 0 0; color: var(--muted); }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 10;
+      max-width: min(420px, calc(100vw - 36px));
+      border: 1px solid var(--line);
+      background: rgba(8, 25, 35, .92);
+      backdrop-filter: blur(18px);
+      border-radius: 18px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+      color: var(--soft);
+      display: none;
+    }
+    .toast.show { display: block; }
+    .hidden { display: none !important; }
+
+    .empty { padding: 24px; color: var(--muted); text-align: center; }
+    .loading { opacity: .72; pointer-events: none; }
+    .mini { color: var(--muted); font-size: 12px; }
+    .close-panel-btn {
+      width: 42px; height: 42px; border-radius: 14px;
+      border: 1px solid var(--line); background: rgba(255,255,255,.06);
+      color: var(--text); font-size: 20px; font-weight: 900; cursor: pointer;
+    }
+    .confirm-backdrop {
+      position: fixed; inset: 0; z-index: 50; display: none; place-items: center;
+      padding: 20px; background: rgba(0,0,0,.58); backdrop-filter: blur(12px);
+    }
+    .confirm-backdrop.show { display: grid; }
+    .confirm-card {
+      width: min(440px, 100%); border: 1px solid var(--line-strong); border-radius: 24px;
+      background: linear-gradient(145deg, rgba(18,43,54,.98), rgba(8,24,32,.96));
+      box-shadow: var(--shadow); padding: 24px; text-align: center;
+    }
+    .confirm-icon { font-size: 38px; margin-bottom: 10px; }
+    .confirm-card h3 { margin: 0; font-size: 24px; letter-spacing: -.035em; }
+    .confirm-card p { margin: 10px 0 20px; color: var(--muted); line-height: 1.45; }
+    .confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    @media (max-width: 960px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 278px; transform: translateX(-105%); transition: transform .18s ease; z-index: 20; }
+      .sidebar.open { transform: translateX(0); }
+      .menu-btn { display: inline-grid; place-items: center; }
+      .main { padding: 16px; }
+      .topbar { margin: -16px -16px 16px; }
+      .admin-chip { padding: 9px 11px; }
+      .form-grid, .form-actions { grid-template-columns: 1fr; }
+      .card-inner { padding: 18px; }
+      .card-head { flex-direction: column; }
+    }
+
+    @media (max-width: 520px) {
+      .top-actions .btn.secondary { display: none; }
+      .page-title p { display: none; }
+      .section-title h2 { font-size: 21px; }
+      .brand-logo { width: 62px; height: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <section id="setupScreen" class="setup-screen hidden">
+    <div class="card login-card">
+      <div class="card-inner">
+        <div class="brand">
+          <div class="brand-logo"><img src="assets/foodsoft-clean.png?v=38" alt="Foodsoft"></div>
+          <div class="brand-title"><strong>Foodsoft Admin</strong><span>Supabase bağlantı kurulumu</span></div>
+        </div>
+        <div class="login-title">
+          <h1>Bağlantı Bilgileri</h1>
+          <p>Project URL ve anon public key bilgilerini gir. Bu bilgiler bu cihazda saklanır.</p>
+        </div>
+        <div class="grid">
+          <div class="field"><label>Project URL</label><input id="setupUrl" placeholder="https://xxxxx.supabase.co" autocomplete="off"></div>
+          <div class="field"><label>anon public key</label><input id="setupKey" placeholder="eyJhbGciOi..." autocomplete="off"></div>
+          <button class="btn" id="saveSetupBtn">💾 Bağlantıyı Kaydet</button>
+          <div class="info-box">Bu alanı bir kere doldurduktan sonra admin paneli Supabase veritabanına bağlanır. Sonradan değiştirmek için panelde “Bağlantı Ayarları” düğmesini kullanabilirsin.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="loginScreen" class="login-screen hidden">
+    <div class="card login-card">
+      <div class="card-inner">
+        <div class="brand">
+          <div class="brand-logo"><img src="assets/foodsoft-clean.png?v=38" alt="Foodsoft"></div>
+          <div class="brand-title"><strong>Foodsoft Admin</strong><span>Kullanıcı yönetim paneli</span></div>
+        </div>
+        <div class="login-title">
+          <h1>Admin Girişi</h1>
+          <p>Kullanıcıları yönetmek için admin hesabıyla giriş yap.</p>
+        </div>
+        <div class="grid">
+          <div class="field"><label>Admin Kullanıcı Adı</label><input id="loginUsername" placeholder="admin" autocomplete="username"></div>
+          <div class="field"><label>Admin Şifre</label><input id="loginPassword" type="password" placeholder="••••" autocomplete="current-password"></div>
+          <button class="btn" id="loginBtn">🔐 Giriş Yap</button>
+          <button class="btn secondary" id="openSetupFromLogin">⚙️ Bağlantı Ayarları</button>
+          <div class="info-box">İlk giriş için: <b>admin</b> / <b>1234</b>. Daha sonra admin adını ve şifresini bu panelden değiştirebilirsin.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="adminApp" class="app hidden">
+    <aside id="sidebar" class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/foodsoft-clean.png?v=38" alt="Foodsoft"></div>
+        <div class="brand-title"><strong>Admin Paneli</strong><span>Foodsoft kullanıcı yönetimi</span></div>
+      </div>
+      <nav class="nav">
+        <button class="active" type="button">👥 Kullanıcı Yönetimi</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="top-left">
+          <button id="menuBtn" class="menu-btn">☰</button>
+        </div>
+        <div class="top-actions">
+          <div class="admin-menu">
+            <button class="admin-chip" id="adminMenuBtn" type="button">👤 <span id="currentAdminText">admin</span> ▾</button>
+            <div class="admin-dropdown" id="adminDropdown">
+              <button type="button" id="editCurrentUserBtn">👤 Kullanıcı Düzenle</button>
+              <button type="button" id="setupBtn">⚙️ Bağlantı Ayarları</button>
+              <button type="button" id="logoutBtn">🚪 Oturumu Kapat</button>
+            </div>
+          </div>
+          <button id="newUserBtn" class="btn">＋ Yeni Kullanıcı</button>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section class="card">
+          <div class="card-inner">
+            <div class="card-head">
+              <div class="section-title">
+                <div class="section-icon">👥</div>
+                <div><h2>Kullanıcı Listesi</h2><p>Sistemde kayıtlı kullanıcıları görüntüleyebilir, düzenleyebilir veya silebilirsin.</p></div>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>#</th><th><div class="th-stack"><span>Kullanıcı Adı</span><input id="usernameSearch" class="header-search" type="search" placeholder="İsim ara..." autocomplete="off"></div></th><th>Rol</th><th><div class="status-head"><span>Durum</span><div class="status-filter" title="Durum filtresi"><select id="statusFilter"><option value="all">Tümü</option><option value="active">Aktif</option><option value="passive">Pasif</option></select></div></div></th><th>Son Giriş</th><th>Son Güncelleme</th><th>İşlemler</th></tr>
+                </thead>
+                <tbody id="usersTbody"><tr><td colspan="7"><div class="empty">Henüz veri yüklenmedi.</div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="card hidden" id="userEditorCard">
+          <div class="card-inner">
+            <div class="card-head">
+              <div class="section-title">
+                <div class="section-icon">➕</div>
+                <div><h2 id="formTitle">Kullanıcı Ekle / Düzenle</h2><p>Yeni kullanıcı ekleyebilir veya listeden seçtiğin kullanıcıyı düzenleyebilirsin.</p></div>
+              </div>
+              <button class="close-panel-btn" id="closeFormBtn" type="button" aria-label="Formu kapat">×</button>
+            </div>
+            <form id="userForm">
+              <input type="hidden" id="targetUsername">
+              <div class="form-grid">
+                <div class="field"><label>Kullanıcı Adı</label><input id="usernameInput" placeholder="Kullanıcı adı giriniz" autocomplete="off" required></div>
+                <div class="field"><label>Yeni Şifre <span class="mini">(Düzenlemede boşsa değişmez)</span></label><input id="passwordInput" type="password" placeholder="Yeni şifre giriniz" autocomplete="new-password"></div>
+                <div class="field"><label>Rol</label><select id="roleInput"><option value="user">Kullanıcı</option><option value="admin">Admin</option></select></div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">💾 Kaydet</button>
+                <button class="btn secondary" type="button" id="clearFormBtn">↻ Temizle</button>
+              </div>
+              <div class="info-box">Şifre alanını boş bırakırsan mevcut şifre değişmez. Giriş yapan kullanıcıyı sağ üstteki menüden “Kullanıcı Düzenle” ile değiştirebilirsin.</div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="confirmBackdrop" class="confirm-backdrop" role="dialog" aria-modal="true" aria-label="İşlem onayı">
+    <div class="confirm-card">
+      <div class="confirm-icon" id="confirmIcon">⚠️</div>
+      <h3 id="confirmTitle">Emin misiniz?</h3>
+      <p id="confirmMessage">Bu işlem uygulanacak.</p>
+      <div class="confirm-actions">
+        <button class="btn danger" id="confirmYesBtn" type="button">Evet</button>
+        <button class="btn secondary" id="confirmNoBtn" type="button">Hayır</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const STORAGE_CONFIG = 'foodsoft_admin_supabase_config_v1';
+    const STORAGE_SESSION = 'foodsoft_admin_session_v1';
+    let sb = null;
+    let session = null;
+    let users = [];
+
+    const el = (id) => document.getElementById(id);
+    const escapeAttr = (value) => String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    const setupScreen = el('setupScreen');
+    const loginScreen = el('loginScreen');
+    const adminApp = el('adminApp');
+    const toast = el('toast');
+    const userEditorCard = el('userEditorCard');
+    const confirmBackdrop = el('confirmBackdrop');
+    const confirmTitle = el('confirmTitle');
+    const confirmMessage = el('confirmMessage');
+    const confirmYesBtn = el('confirmYesBtn');
+    const confirmNoBtn = el('confirmNoBtn');
+    let confirmResolver = null;
+
+    function showToast(message, type = 'info') {
+      toast.textContent = message;
+      toast.className = 'toast show';
+      toast.style.borderColor = type === 'error' ? 'rgba(255,95,111,.45)' : 'rgba(120,216,248,.28)';
+      setTimeout(() => toast.className = 'toast', 3400);
+    }
+
+    function getConfig() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_CONFIG) || 'null'); } catch { return null; }
+    }
+    function saveConfig(url, key) {
+      localStorage.setItem(STORAGE_CONFIG, JSON.stringify({ url: url.trim(), key: key.trim() }));
+    }
+    function initClient() {
+      const cfg = getConfig();
+      if (!cfg || !cfg.url || !cfg.key || !window.supabase) return false;
+      sb = window.supabase.createClient(cfg.url, cfg.key);
+      return true;
+    }
+    function getSession() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_SESSION) || 'null'); } catch { return null; }
+    }
+    function saveSession(username, password) {
+      session = { username, password };
+      localStorage.setItem(STORAGE_SESSION, JSON.stringify(session));
+    }
+    function clearSession() {
+      session = null;
+      localStorage.removeItem(STORAGE_SESSION);
+    }
+    function screen(name) {
+      setupScreen.classList.toggle('hidden', name !== 'setup');
+      loginScreen.classList.toggle('hidden', name !== 'login');
+      adminApp.classList.toggle('hidden', name !== 'app');
+    }
+    function fmtDate(value) {
+      if (!value) return '-';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return '-';
+      return d.toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'medium' });
+    }
+    function fmtLastLogin(value) {
+      if (!value) return 'Henüz giriş yapmadı';
+      return fmtDate(value);
+    }
+    function openForm() { userEditorCard.classList.remove('hidden'); }
+    function closeForm() { userEditorCard.classList.add('hidden'); }
+    function askConfirm(title, message) {
+      confirmTitle.textContent = title || 'Emin misiniz?';
+      confirmMessage.textContent = message || 'Bu işlem uygulanacak.';
+      confirmBackdrop.classList.add('show');
+      return new Promise(resolve => { confirmResolver = resolve; });
+    }
+    function closeConfirm(result) {
+      confirmBackdrop.classList.remove('show');
+      if (confirmResolver) confirmResolver(result);
+      confirmResolver = null;
+    }
+
+    async function rpc(name, args) {
+      if (!sb) throw new Error('Supabase bağlantısı yok.');
+      const { data, error } = await sb.rpc(name, args);
+      if (error) throw error;
+      return data;
+    }
+
+    async function loadUsers() {
+      if (!session) return;
+      document.body.classList.add('loading');
+      try {
+        users = await rpc('admin_list_users', { p_admin_username: session.username, p_admin_password: session.password });
+        renderUsers();
+        el('currentAdminText').textContent = session.username;
+      } catch (err) {
+        clearSession();
+        screen('login');
+        showToast('Admin oturumu doğrulanamadı: ' + (err.message || err), 'error');
+      } finally {
+        document.body.classList.remove('loading');
+      }
+    }
+
+    function sortUsersForAdmin(list) {
+      return [...(list || [])].sort((a, b) => {
+        const aAdmin = a.role === 'admin';
+        const bAdmin = b.role === 'admin';
+        if (aAdmin !== bAdmin) return aAdmin ? -1 : 1;
+
+        const aActive = a.active === true;
+        const bActive = b.active === true;
+        if (aActive !== bActive) return aActive ? -1 : 1;
+
+        return String(a.username || '').localeCompare(String(b.username || ''), 'tr', { sensitivity: 'base', numeric: true });
+      });
+    }
+
+    function getVisibleUsers() {
+      const sorted = sortUsersForAdmin(users);
+      const filterValue = el('statusFilter') ? el('statusFilter').value : 'all';
+      const searchValue = (el('usernameSearch') ? el('usernameSearch').value : '').trim().toLocaleLowerCase('tr');
+
+      return sorted.filter(u => {
+        if (u.role === 'admin') return false;
+
+        if (filterValue === 'active' && u.active !== true) return false;
+        if (filterValue === 'passive' && u.active === true) return false;
+
+        if (searchValue) {
+          return String(u.username || '').toLocaleLowerCase('tr').includes(searchValue);
+        }
+
+        return true;
+      });
+    }
+
+    function renderUsers() {
+      const tbody = el('usersTbody');
+      if (!users || !users.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty">Kullanıcı bulunamadı.</div></td></tr>';
+        return;
+      }
+      const visibleUsers = getVisibleUsers();
+      if (!visibleUsers.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty">Seçili filtreye uygun kullanıcı bulunamadı.</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = visibleUsers.map((u, i) => {
+        const safeUser = String(u.username).replace(/'/g, "\\'");
+        const attrUser = String(u.username).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const displayUser = String(u.username).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const isAdmin = u.role === 'admin';
+        const isActive = u.active === true;
+        const roleBadge = `<span class="badge ${isAdmin ? 'admin' : 'user'}">${isAdmin ? 'Admin' : 'Kullanıcı'}</span>`;
+        const statusBadge = isAdmin
+          ? `<span class="protected-text">🛡️ Korumalı</span>`
+          : `<span class="badge ${isActive ? 'active' : 'passive'}">${isActive ? 'Aktif' : 'Pasif'}</span>`;
+        const toggleButton = isAdmin ? '' : `<button class="status-switch ${isActive ? 'active' : ''}" type="button" data-username="${attrUser}" data-active="${isActive ? 'true' : 'false'}" title="${isActive ? 'Pasif yap' : 'Aktif yap'}" aria-label="${isActive ? 'Pasif yap' : 'Aktif yap'}"></button>`;
+        const deleteButton = isAdmin ? '' : `<button class="btn danger icon" type="button" onclick="deleteUser('${safeUser}')" title="Tamamen sil">🗑️</button>`;
+        return `<tr>
+          <td>${i + 1}</td>
+          <td><b>${displayUser}</b></td>
+          <td>${roleBadge}</td>
+          <td>${statusBadge}</td>
+          <td>${fmtLastLogin(u.last_login_at)}</td>
+          <td>${fmtDate(u.updated_at)}</td>
+          <td><div class="actions">
+            <button class="btn ghost icon" type="button" onclick="editUser('${safeUser}')" title="Düzenle">✏️</button>
+            ${toggleButton}
+            ${deleteButton}
+          </div></td>
+        </tr>`;
+      }).join('');
+      setupStatusSwitchDrag();
+    }
+
+    function setupStatusSwitchDrag() {
+      document.querySelectorAll('.status-switch').forEach(sw => {
+        if (sw.dataset.ready === '1') return;
+        sw.dataset.ready = '1';
+
+        let startX = 0;
+        let wasActive = false;
+        let didDrag = false;
+        const maxMove = 22;
+
+        const setKnob = (px) => {
+          const limited = Math.max(0, Math.min(maxMove, px));
+          sw.style.setProperty('--knob-x', limited + 'px');
+          sw.classList.toggle('active', limited >= maxMove / 2);
+          return limited;
+        };
+
+        sw.addEventListener('pointerdown', ev => {
+          if (sw.classList.contains('busy')) return;
+          startX = ev.clientX;
+          wasActive = sw.dataset.active === 'true';
+          didDrag = false;
+          sw.classList.add('dragging');
+          sw.setPointerCapture(ev.pointerId);
+          setKnob(wasActive ? maxMove : 0);
+        });
+
+        sw.addEventListener('pointermove', ev => {
+          if (!sw.classList.contains('dragging')) return;
+          const delta = ev.clientX - startX;
+          const base = wasActive ? maxMove : 0;
+          setKnob(base + delta);
+          if (Math.abs(delta) > 3) didDrag = true;
+          ev.preventDefault();
+        });
+
+        const finishDrag = async (ev) => {
+          if (!sw.classList.contains('dragging')) return;
+          const delta = ev.clientX - startX;
+          sw.classList.remove('dragging');
+          try { sw.releasePointerCapture(ev.pointerId); } catch {}
+
+          const currentPx = Math.max(0, Math.min(maxMove, (wasActive ? maxMove : 0) + delta));
+          const newActive = didDrag ? currentPx >= maxMove / 2 : !wasActive;
+
+          sw.classList.toggle('active', newActive);
+          sw.style.removeProperty('--knob-x');
+
+          if (newActive === wasActive) return;
+          sw.classList.add('busy');
+          await window.toggleUserStatus(sw.dataset.username, newActive);
+        };
+
+        sw.addEventListener('pointerup', finishDrag);
+        sw.addEventListener('pointercancel', ev => {
+          sw.classList.remove('dragging');
+          sw.classList.toggle('active', sw.dataset.active === 'true');
+          sw.style.removeProperty('--knob-x');
+        });
+      });
+    }
+
+    window.editUser = function(username) {
+      const u = users.find(x => x.username === username);
+      if (!u) return;
+      el('targetUsername').value = u.username;
+      el('usernameInput').value = u.username;
+      el('passwordInput').value = '';
+      el('roleInput').value = u.role;
+      el('roleInput').disabled = u.role === 'admin';
+      el('formTitle').textContent = 'Kullanıcı Düzenle';
+      openForm();
+      document.getElementById('userEditorCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function editCurrentUser() {
+      if (!session || !session.username) return showToast('Önce giriş yapmalısın.', 'error');
+      const current = users.find(x => String(x.username) === String(session.username));
+      if (!current) return showToast('Giriş yapan kullanıcı bilgisi bulunamadı. Sayfayı yenileyip tekrar dene.', 'error');
+      window.editUser(current.username);
+    }
+
+
+    window.toggleUserStatus = async function(username, newActive) {
+      const actionText = newActive ? 'aktif' : 'pasif';
+      try {
+        await rpc('admin_update_user', {
+          p_admin_username: session.username,
+          p_admin_password: session.password,
+          p_target_username: username,
+          p_new_username: null,
+          p_new_password: null,
+          p_new_role: null,
+          p_new_active: newActive
+        });
+        showToast('Kullanıcı ' + actionText + ' yapıldı.');
+        await loadUsers();
+      } catch (err) { showToast('Durum değiştirme başarısız: ' + (err.message || err), 'error'); }
+    }
+
+    window.deleteUser = async function(username) {
+      const ok = await askConfirm('Emin misiniz?', username + ' kullanıcısı tamamen silinecek. Bu işlem geri alınamaz.');
+      if (!ok) return;
+      try {
+        await rpc('admin_delete_user', { p_admin_username: session.username, p_admin_password: session.password, p_target_username: username });
+        showToast('Kullanıcı silindi.');
+        clearForm();
+        await loadUsers();
+      } catch (err) { showToast('Silme başarısız: ' + (err.message || err), 'error'); }
+    }
+
+    function clearForm() {
+      el('targetUsername').value = '';
+      el('usernameInput').value = '';
+      el('passwordInput').value = '';
+      el('roleInput').value = 'user';
+      el('roleInput').disabled = false;
+      el('formTitle').textContent = 'Kullanıcı Ekle / Düzenle';
+    }
+
+    el('saveSetupBtn').addEventListener('click', () => {
+      const url = el('setupUrl').value;
+      const key = el('setupKey').value;
+      if (!url.trim() || !key.trim()) return showToast('Project URL ve anon public key zorunlu.', 'error');
+      saveConfig(url, key);
+      initClient();
+      showToast('Bağlantı kaydedildi.');
+      screen('login');
+    });
+    el('openSetupFromLogin').addEventListener('click', () => {
+      const cfg = getConfig();
+      if (cfg) { el('setupUrl').value = cfg.url || ''; el('setupKey').value = cfg.key || ''; }
+      screen('setup');
+    });
+    el('setupBtn').addEventListener('click', () => {
+      el('adminDropdown').classList.remove('show');
+      const cfg = getConfig();
+      if (cfg) { el('setupUrl').value = cfg.url || ''; el('setupKey').value = cfg.key || ''; }
+      screen('setup');
+    });
+    el('loginBtn').addEventListener('click', async () => {
+      const username = el('loginUsername').value.trim();
+      const password = el('loginPassword').value;
+      if (!username || !password) return showToast('Admin kullanıcı adı ve şifre gir.', 'error');
+      try {
+        const data = await rpc('admin_list_users', { p_admin_username: username, p_admin_password: password });
+        saveSession(username, password);
+        users = data || [];
+        renderUsers();
+        el('currentAdminText').textContent = username;
+        screen('app');
+        showToast('Admin girişi başarılı.');
+      } catch (err) { showToast('Giriş başarısız: ' + (err.message || err), 'error'); }
+    });
+    el('editCurrentUserBtn').addEventListener('click', () => { el('adminDropdown').classList.remove('show'); editCurrentUser(); });
+    el('logoutBtn').addEventListener('click', () => { clearSession(); screen('login'); showToast('Oturum kapatıldı.'); });
+    el('adminMenuBtn').addEventListener('click', (ev) => { ev.stopPropagation(); el('adminDropdown').classList.toggle('show'); });
+    document.addEventListener('click', () => el('adminDropdown').classList.remove('show'));
+    el('adminDropdown').addEventListener('click', (ev) => ev.stopPropagation());
+    el('statusFilter').addEventListener('change', renderUsers);
+    el('usernameSearch').addEventListener('input', renderUsers);
+    el('newUserBtn').addEventListener('click', () => { clearForm(); openForm(); document.getElementById('userEditorCard').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+    el('clearFormBtn').addEventListener('click', clearForm);
+    el('closeFormBtn').addEventListener('click', closeForm);
+    confirmYesBtn.addEventListener('click', () => closeConfirm(true));
+    confirmNoBtn.addEventListener('click', () => closeConfirm(false));
+    el('menuBtn').addEventListener('click', () => el('sidebar').classList.toggle('open'));
+
+    el('userForm').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const target = el('targetUsername').value.trim();
+      const username = el('usernameInput').value.trim();
+      const password = el('passwordInput').value;
+      const role = el('roleInput').value;
+      if (!username) return showToast('Kullanıcı adı boş olamaz.', 'error');
+      try {
+        if (target) {
+          const editingCurrentAdmin = target === session.username;
+          await rpc('admin_update_user', {
+            p_admin_username: session.username,
+            p_admin_password: session.password,
+            p_target_username: target,
+            p_new_username: username,
+            p_new_password: password || null,
+            p_new_role: role,
+            p_new_active: null
+          });
+          if (editingCurrentAdmin) {
+            session.username = username;
+            if (password) session.password = password;
+            localStorage.setItem(STORAGE_SESSION, JSON.stringify(session));
+          }
+          showToast('Kullanıcı güncellendi.');
+        } else {
+          if (!password.trim()) return showToast('Yeni kullanıcı için şifre zorunlu.', 'error');
+          await rpc('admin_create_user', {
+            p_admin_username: session.username,
+            p_admin_password: session.password,
+            p_username: username,
+            p_password: password,
+            p_role: role,
+            p_active: true
+          });
+          showToast('Kullanıcı eklendi.');
+        }
+        clearForm();
+        await loadUsers();
+      } catch (err) { showToast('Kaydetme başarısız: ' + (err.message || err), 'error'); }
+    });
+
+    (function start() {
+      const cfg = getConfig();
+      if (!cfg) { screen('setup'); return; }
+      el('setupUrl').value = cfg.url || '';
+      el('setupKey').value = cfg.key || '';
+      if (!initClient()) { screen('setup'); return; }
+      session = getSession();
+      if (session && session.username && session.password) { screen('app'); loadUsers(); }
+      else { screen('login'); }
+    })();
+  </script>
+</body>
+</html>
