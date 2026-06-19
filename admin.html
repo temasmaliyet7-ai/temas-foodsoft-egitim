@@ -635,14 +635,9 @@
       return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) };
     }
     function getConfig() {
-      try {
-        const cfg = JSON.parse(localStorage.getItem(STORAGE_CONFIG) || 'null');
-        if (!cfg || !cfg.url || !cfg.key) return defaultConfig();
-        cfg.url = normalizeProjectUrl(cfg.url);
-        cfg.key = normalizeApiKey(cfg.key);
-        if (!cfg.url || !cfg.key) return defaultConfig();
-        return cfg;
-      } catch { return defaultConfig(); }
+      // GitHub Pages tarafında eski/yanlış localStorage bilgisi kalırsa giriş bozulmasın.
+      // Bu proje için doğru Supabase bağlantısını ana kaynak olarak kullanıyoruz.
+      return defaultConfig();
     }
     function saveConfig(url, key) {
       const cfg = { url: normalizeProjectUrl(url || DEFAULT_SUPABASE_URL), key: normalizeApiKey(key || DEFAULT_SUPABASE_KEY) };
@@ -720,18 +715,8 @@
     }
 
     async function rpc(name, args) {
-      if (!sb && !initClient()) throw new Error('Supabase bağlantısı yok.');
-      try {
-        const { data, error } = await sb.rpc(name, args);
-        if (error) throw error;
-        return data;
-      } catch (err) {
-        const msg = String(err && (err.message || err));
-        if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch')) {
-          return await directRpc(name, args);
-        }
-        throw err;
-      }
+      // CDN/Supabase client veya GitHub cache sorunlarına takılmamak için doğrudan REST RPC kullanıyoruz.
+      return await directRpc(name, args);
     }
 
     async function testSetupConnection() {

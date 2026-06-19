@@ -2246,14 +2246,8 @@
     }
 
     function getSupabaseConfig() {
-      try {
-        const cfg = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || "null");
-        if (!cfg || !cfg.url || !cfg.key) return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) };
-        cfg.url = normalizeProjectUrl(cfg.url);
-        cfg.key = normalizeApiKey(cfg.key);
-        if (!cfg.url || !cfg.key) return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) };
-        return cfg;
-      } catch (e) { return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) }; }
+      // Kullanıcı paneli de eski/yanlış tarayıcı kaydına takılmasın; doğru proje bağlantısını kullanır.
+      return { url: normalizeProjectUrl(DEFAULT_SUPABASE_URL), key: normalizeApiKey(DEFAULT_SUPABASE_KEY) };
     }
 
     function getLoginSupabaseClient() {
@@ -2296,28 +2290,13 @@
         return;
       }
       const client = getLoginSupabaseClient();
-      if (!client) {
-        if (authError) authError.textContent = "Supabase bağlantısı bulunamadı. Önce admin panelinde bağlantı ayarlarını kaydediniz.";
-        return;
-      }
       if (authSubmit) {
         authSubmit.disabled = true;
         authSubmit.textContent = "Kontrol ediliyor...";
       }
       try {
         let data;
-        try {
-          const result = await client.rpc("app_login", { p_username: username, p_password: password });
-          if (result.error) throw result.error;
-          data = result.data;
-        } catch (err) {
-          const msg = String(err && (err.message || err));
-          if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch')) {
-            data = await directLoginRpc(username, password);
-          } else {
-            throw err;
-          }
-        }
+        data = await directLoginRpc(username, password);
         if (!Array.isArray(data) || data.length === 0) {
           if (authError) authError.textContent = "Kullanıcı adı veya şifre hatalı.";
           return;
