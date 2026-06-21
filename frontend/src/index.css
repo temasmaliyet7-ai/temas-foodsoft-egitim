@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #111820;
+  background:
+    radial-gradient(circle at top left, rgba(49, 183, 230, 0.13), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(49, 183, 230, 0.09), transparent 35%),
+    linear-gradient(135deg, #eefaff, #ffffff);
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@layer components {
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 font-extrabold text-white
+           bg-gradient-to-br from-accent to-accent-dark shadow-[0_15px_34px_rgba(26,157,204,.28)]
+           transition active:scale-[.99] hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 font-extrabold text-accent-dark
+           bg-white/70 border border-accent/25 transition hover:bg-white disabled:opacity-50;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 font-extrabold text-white
+           bg-gradient-to-br from-rose-500 to-red-600 transition active:scale-[.99] hover:brightness-105;
+  }
+  .input {
+    @apply w-full min-h-[50px] rounded-2xl border border-accent/20 bg-white/70 px-4 text-ink
+           outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition;
+  }
+  .card {
+    @apply rounded-3xl border border-accent/15 bg-white/80 shadow-card backdrop-blur;
+  }
+}
