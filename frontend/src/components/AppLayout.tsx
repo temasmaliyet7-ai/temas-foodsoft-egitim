@@ -1,93 +1,137 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { ThemeToggle } from './ThemeToggle';
+import { IconBook, IconLayers, IconUsers, IconLogout, IconMenu, IconX, IconUser } from './icons';
 
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  [
-    'rounded-2xl px-4 py-2.5 text-sm font-extrabold transition',
-    isActive
-      ? 'bg-gradient-to-br from-accent/20 to-white text-accent-dark border border-accent/40'
-      : 'text-muted hover:bg-accent/10 hover:text-accent-dark border border-transparent',
-  ].join(' ');
+const links = (isAdmin: boolean) => [
+  { to: '/', label: 'Kütüphane', icon: IconBook, end: true },
+  ...(isAdmin
+    ? [
+        { to: '/admin/egitimler', label: 'Eğitim Yönetimi', icon: IconLayers, end: false },
+        { to: '/admin/kullanicilar', label: 'Kullanıcılar', icon: IconUsers, end: false },
+      ]
+    : []),
+];
+
+function Brand() {
+  return (
+    <Link to="/" className="flex items-center gap-2.5">
+      <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-brand-600">
+        <img src="/assets/foodsoft-clean.png" alt="" className="h-5 w-3.5 object-contain brightness-0 invert" />
+      </span>
+      <span className="text-[15px] font-bold tracking-tight text-content">Foodsoft</span>
+    </Link>
+  );
+}
 
 export function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
   const isAdmin = user?.role === 'admin';
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setUserMenu(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
   };
 
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    [
+      'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+      isActive
+        ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+        : 'text-subtle hover:bg-elevated hover:text-content',
+    ].join(' ');
+
   return (
-    <div className="mx-auto w-full max-w-[1500px] p-3 sm:p-4">
-      <header className="sticky top-2 z-30 mb-4 flex items-center justify-between gap-3 rounded-3xl border border-accent/20 bg-white/85 px-4 py-3 shadow-soft backdrop-blur">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="grid h-11 w-11 place-items-center overflow-hidden rounded-2xl bg-[rgb(54,195,248)]">
-              <img src="/assets/foodsoft-clean.png" alt="Foodsoft" className="h-7 w-5 object-contain" />
-            </span>
-            <span className="hidden text-lg font-black tracking-tight text-accent-dark sm:block">
-              Foodsoft Eğitim
-            </span>
-          </Link>
+    <div className="min-h-screen">
+      {/* Üst bar */}
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/80 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
+          <div className="flex items-center gap-6">
+            <Brand />
+            <nav className="hidden items-center gap-1 md:flex">
+              {links(isAdmin).map((l) => (
+                <NavLink key={l.to} to={l.to} end={l.end} className={navClass}>
+                  <l.icon width={16} height={16} />
+                  {l.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setUserMenu((o) => !o)}
+                className="flex items-center gap-2 rounded-lg border border-line bg-surface py-1.5 pl-1.5 pr-2.5 text-sm font-medium text-content transition-colors hover:bg-elevated"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-500/12 text-brand-600 dark:text-brand-400">
+                  <IconUser width={14} height={14} />
+                </span>
+                <span className="hidden sm:inline">{user?.username}</span>
+              </button>
+              {userMenu && (
+                <div className="absolute right-0 top-[calc(100%+8px)] w-52 animate-scale-in rounded-xl border border-line bg-elevated p-1.5 shadow-pop">
+                  <div className="px-2.5 py-2">
+                    <p className="text-sm font-semibold text-content">{user?.username}</p>
+                    <p className="text-xs text-faint">{isAdmin ? 'Yönetici' : 'Kullanıcı'}</p>
+                  </div>
+                  <div className="my-1 h-px bg-line" />
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-subtle transition-colors hover:bg-surface hover:text-content"
+                  >
+                    <IconLogout width={16} height={16} />
+                    Oturumu kapat
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setMobileOpen((o) => !o)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface text-subtle md:hidden"
+              aria-label="Menü"
+            >
+              {mobileOpen ? <IconX width={18} height={18} /> : <IconMenu width={18} height={18} />}
+            </button>
+          </div>
         </div>
 
-        <nav className="hidden items-center gap-2 md:flex">
-          <NavLink to="/" end className={navLinkClass}>
-            📖 Kütüphanem
-          </NavLink>
-          {isAdmin && (
-            <>
-              <NavLink to="/admin/egitimler" className={navLinkClass}>
-                🗂️ Eğitim Yönetimi
-              </NavLink>
-              <NavLink to="/admin/kullanicilar" className={navLinkClass}>
-                👥 Kullanıcılar
-              </NavLink>
-            </>
-          )}
-        </nav>
-
-        <div className="flex items-center gap-2">
-          <span className="hidden rounded-full bg-accent/10 px-3 py-1.5 text-sm font-extrabold text-accent-dark sm:inline-flex">
-            👤 {user?.username}
-            {isAdmin && <span className="ml-1 text-accent">• admin</span>}
-          </span>
-          <button onClick={handleLogout} className="btn-ghost h-10">
-            Çıkış
-          </button>
-          <button
-            className="grid h-10 w-10 place-items-center rounded-2xl border border-accent/25 bg-white/70 text-accent-dark md:hidden"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="Menü"
-          >
-            ☰
-          </button>
-        </div>
+        {/* Mobil menü */}
+        {mobileOpen && (
+          <nav className="border-t border-line px-4 py-3 md:hidden">
+            <div className="mx-auto flex max-w-6xl flex-col gap-1">
+              {links(isAdmin).map((l) => (
+                <NavLink
+                  key={l.to}
+                  to={l.to}
+                  end={l.end}
+                  className={navClass}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <l.icon width={16} height={16} />
+                  {l.label}
+                </NavLink>
+              ))}
+            </div>
+          </nav>
+        )}
       </header>
 
-      {menuOpen && (
-        <nav className="mb-4 grid gap-2 rounded-3xl border border-accent/20 bg-white/90 p-3 md:hidden">
-          <NavLink to="/" end className={navLinkClass} onClick={() => setMenuOpen(false)}>
-            📖 Kütüphanem
-          </NavLink>
-          {isAdmin && (
-            <>
-              <NavLink to="/admin/egitimler" className={navLinkClass} onClick={() => setMenuOpen(false)}>
-                🗂️ Eğitim Yönetimi
-              </NavLink>
-              <NavLink to="/admin/kullanicilar" className={navLinkClass} onClick={() => setMenuOpen(false)}>
-                👥 Kullanıcılar
-              </NavLink>
-            </>
-          )}
-        </nav>
-      )}
-
-      <main>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
         <Outlet />
       </main>
     </div>

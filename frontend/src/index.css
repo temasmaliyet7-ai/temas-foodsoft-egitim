@@ -2,8 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---- Tasarım tokenları (açık/koyu) ---- */
 :root {
+  --canvas: 250 250 251; /* neutral-50 */
+  --surface: 255 255 255; /* white */
+  --elevated: 255 255 255;
+  --line: 229 231 235; /* neutral-200 */
+  --content: 17 24 39; /* neutral-900 */
+  --subtle: 75 85 99; /* neutral-600 */
+  --faint: 156 163 175; /* neutral-400 */
   color-scheme: light;
+}
+
+.dark {
+  --canvas: 9 11 16; /* #090b10 */
+  --surface: 17 20 27; /* #11141b */
+  --elevated: 24 28 37; /* #181c25 */
+  --line: 38 43 54; /* #262b36 */
+  --content: 237 240 245;
+  --subtle: 156 163 175;
+  --faint: 107 114 128;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html,
@@ -14,38 +37,65 @@ body,
 }
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
-  color: #111820;
-  background:
-    radial-gradient(circle at top left, rgba(49, 183, 230, 0.13), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(49, 183, 230, 0.09), transparent 35%),
-    linear-gradient(135deg, #eefaff, #ffffff);
+  font-family: 'Inter', system-ui, sans-serif;
+  background: rgb(var(--canvas));
+  color: rgb(var(--content));
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
 }
 
-* {
-  box-sizing: border-box;
-}
-
 @layer components {
-  .btn-accent {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 font-extrabold text-white
-           bg-gradient-to-br from-accent to-accent-dark shadow-[0_15px_34px_rgba(26,157,204,.28)]
-           transition active:scale-[.99] hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed;
+  /* Düğmeler */
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-lg px-3.5 text-sm font-semibold
+           transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40;
+  }
+  .btn-primary {
+    @apply btn bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800;
+  }
+  .btn-secondary {
+    @apply btn border border-line bg-surface text-content hover:bg-elevated;
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 font-extrabold text-accent-dark
-           bg-white/70 border border-accent/25 transition hover:bg-white disabled:opacity-50;
+    @apply btn text-subtle hover:bg-elevated hover:text-content;
   }
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 font-extrabold text-white
-           bg-gradient-to-br from-rose-500 to-red-600 transition active:scale-[.99] hover:brightness-105;
+    @apply btn bg-rose-600 text-white hover:bg-rose-700;
   }
-  .input {
-    @apply w-full min-h-[50px] rounded-2xl border border-accent/20 bg-white/70 px-4 text-ink
-           outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition;
+  .btn-danger-soft {
+    @apply btn border border-rose-500/20 bg-rose-500/5 text-rose-600 hover:bg-rose-500/10 dark:text-rose-400;
   }
+
+  /* Form alanları */
+  .field {
+    @apply h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm text-content
+           placeholder:text-faint transition focus:border-brand-500 focus:outline-none
+           focus:ring-2 focus:ring-brand-500/20;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-subtle;
+  }
+
+  /* Kartlar */
   .card {
-    @apply rounded-3xl border border-accent/15 bg-white/80 shadow-card backdrop-blur;
+    @apply rounded-2xl border border-line bg-surface shadow-sm;
   }
+
+  /* Rozetler */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold;
+  }
+}
+
+/* İnce kaydırma çubuğu */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--line));
+  border-radius: 999px;
+  border: 2px solid rgb(var(--canvas));
 }

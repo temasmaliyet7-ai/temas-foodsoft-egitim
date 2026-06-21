@@ -4,66 +4,76 @@ import { fetchTrainings } from '../api/trainings';
 import { apiErrorMessage } from '../api/client';
 import { Spinner } from '../components/Spinner';
 import { useAuth } from '../auth/AuthContext';
+import { IconBook, IconChevronRight, IconPlus, IconLayers } from '../components/icons';
 
 export function LibraryPage() {
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const { data, isLoading, error } = useQuery({ queryKey: ['trainings'], queryFn: fetchTrainings });
 
   return (
-    <div className="mx-auto w-full max-w-[920px]">
-      <div className="px-2 pb-5">
-        <h2 className="text-3xl font-black tracking-tight text-ink sm:text-4xl">
-          Merhaba {user?.username}, hoş geldiniz! 👋
-        </h2>
-        <p className="mt-2 text-base font-semibold text-muted">
-          Görüntülemek istediğiniz eğitim başlığını seçiniz.
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-content">Eğitim Kütüphanesi</h1>
+        <p className="mt-1 text-sm text-subtle">
+          {data ? `${data.length} eğitim` : 'Eğitimlerinizi görüntüleyin'}
         </p>
       </div>
 
       {isLoading && (
-        <div className="grid place-items-center py-16">
-          <Spinner label="Eğitimler yükleniyor..." />
+        <div className="grid place-items-center py-20">
+          <Spinner label="Yükleniyor…" />
         </div>
       )}
 
       {error && (
-        <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-center font-bold text-red-600">
+        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4 text-sm font-medium text-rose-600 dark:text-rose-400">
           {apiErrorMessage(error)}
         </div>
       )}
 
       {data && data.length === 0 && (
-        <div className="card p-10 text-center text-muted">
-          Henüz eğitim eklenmemiş.
-          {user?.role === 'admin' && (
-            <div className="mt-3">
-              <Link to="/admin/egitimler" className="btn-accent h-11 px-5">
-                + İlk eğitimi oluştur
-              </Link>
-            </div>
+        <div className="card flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-elevated text-faint">
+            <IconLayers width={22} height={22} />
+          </span>
+          <div>
+            <p className="font-semibold text-content">Henüz eğitim yok</p>
+            <p className="mt-0.5 text-sm text-subtle">
+              {isAdmin ? 'İlk eğitimini oluşturarak başla.' : 'Yöneticiniz eğitim eklediğinde burada görünecek.'}
+            </p>
+          </div>
+          {isAdmin && (
+            <Link to="/admin/egitimler" className="btn-primary mt-1 h-9">
+              <IconPlus width={16} height={16} />
+              Eğitim oluştur
+            </Link>
           )}
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {data?.map((t) => (
           <Link
             key={t.id}
             to={`/egitim/${t.id}`}
-            className="group flex items-center gap-3 rounded-3xl border border-accent/20 bg-gradient-to-br from-white to-[rgba(235,250,255,.78)] p-4 shadow-card transition hover:-translate-y-0.5 hover:border-accent/40"
+            className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-5 shadow-sm transition-all hover:border-brand-500/40 hover:shadow-md"
           >
-            <span className="grid h-12 w-12 flex-none place-items-center rounded-2xl bg-gradient-to-br from-accent to-accent-dark text-xl text-white shadow">
-              📘
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-black text-accent-dark">{t.title}</span>
-              {t.subtitle && (
-                <span className="block truncate text-sm font-semibold text-muted">{t.subtitle}</span>
-              )}
-            </span>
-            <span className="flex-none rounded-full border border-accent/20 bg-accent/10 px-3 py-1.5 text-xs font-black text-accent-dark">
-              {t.pageCount} sf
-            </span>
+            <div className="mb-6 flex items-start justify-between">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                <IconBook width={20} height={20} />
+              </span>
+              <span className="badge bg-elevated text-subtle">{t.pageCount} sayfa</span>
+            </div>
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="truncate font-semibold text-content">{t.title}</h3>
+                {t.subtitle && <p className="mt-0.5 line-clamp-1 text-sm text-subtle">{t.subtitle}</p>}
+              </div>
+              <span className="flex-none text-faint transition-transform group-hover:translate-x-0.5 group-hover:text-brand-500">
+                <IconChevronRight width={18} height={18} />
+              </span>
+            </div>
           </Link>
         ))}
       </div>

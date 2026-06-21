@@ -6,6 +6,7 @@ import { apiErrorMessage } from '../api/client';
 import { Spinner } from '../components/Spinner';
 import { useSwipe } from '../hooks/useSwipe';
 import { useFullscreen } from '../hooks/useFullscreen';
+import { IconArrowLeft, IconArrowRight, IconMaximize, IconX } from '../components/icons';
 
 export function TrainingViewerPage() {
   const { id = '' } = useParams();
@@ -34,10 +35,9 @@ export function TrainingViewerPage() {
     [total],
   );
 
-  // Eğitim değişince başa sar
   useEffect(() => setPage(1), [id]);
 
-  // Komşu sayfaları önden yükle (akıllı ön yükleme)
+  // Komşu sayfaları önden yükle
   useEffect(() => {
     [pages[page - 2], pages[page]].forEach((p) => {
       if (p) {
@@ -65,14 +65,14 @@ export function TrainingViewerPage() {
 
   if (isLoading)
     return (
-      <div className="grid place-items-center py-20">
-        <Spinner label="Eğitim yükleniyor..." />
+      <div className="grid place-items-center py-24">
+        <Spinner label="Eğitim yükleniyor…" />
       </div>
     );
 
   if (error)
     return (
-      <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-center font-bold text-red-600">
+      <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4 text-sm font-medium text-rose-600 dark:text-rose-400">
         {apiErrorMessage(error)}
       </div>
     );
@@ -80,55 +80,61 @@ export function TrainingViewerPage() {
   if (!data) return null;
 
   return (
-    <div className="mx-auto w-full max-w-[1100px]">
-      <div className="mb-3 flex items-center justify-between gap-3 rounded-3xl border border-accent/15 bg-white/80 px-4 py-3 shadow-card">
-        <div className="min-w-0">
-          <h2 className="truncate text-lg font-black text-ink sm:text-2xl">{data.title}</h2>
-          {data.subtitle && <p className="truncate text-sm text-muted">{data.subtitle}</p>}
-        </div>
-        <div className="flex flex-none items-center gap-2">
-          <button
-            onClick={() => fsContainerRef.current && enter(fsContainerRef.current)}
-            className="btn-accent h-10 px-4 text-sm"
-            disabled={total === 0}
+    <div>
+      {/* Başlık satırı */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            to="/"
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-line bg-surface text-subtle transition-colors hover:bg-elevated hover:text-content"
+            aria-label="Geri"
           >
-            ⛶ Tam Ekran
-          </button>
-          <Link to="/" className="btn-ghost h-10 px-4 text-sm">
-            Ana Sayfa
+            <IconArrowLeft width={17} height={17} />
           </Link>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold text-content">{data.title}</h1>
+            {data.subtitle && <p className="truncate text-sm text-subtle">{data.subtitle}</p>}
+          </div>
         </div>
+        <button
+          onClick={() => fsContainerRef.current && enter(fsContainerRef.current)}
+          disabled={total === 0}
+          className="btn-secondary h-9"
+        >
+          <IconMaximize width={16} height={16} />
+          <span className="hidden sm:inline">Tam ekran</span>
+        </button>
       </div>
 
       {total === 0 ? (
-        <div className="card grid place-items-center p-16 text-muted">Bu eğitimde henüz sayfa yok.</div>
+        <div className="card grid place-items-center py-24 text-sm text-subtle">
+          Bu eğitimde henüz sayfa yok.
+        </div>
       ) : (
-        <div className="rounded-3xl border border-accent/15 bg-white/80 p-2.5 shadow-soft">
+        <div>
+          {/* Sahne */}
           <div
             ref={stageRef}
-            className="relative grid min-h-[60vh] cursor-grab touch-pan-y place-items-center overflow-hidden rounded-2xl bg-white"
+            className="relative grid min-h-[58vh] cursor-grab touch-pan-y select-none place-items-center overflow-hidden rounded-2xl border border-line bg-elevated p-2 active:cursor-grabbing"
           >
             <img
               src={current?.image_url}
-              alt={`${data.title} - Sayfa ${page}`}
+              alt={`${data.title} — Sayfa ${page}`}
               draggable={false}
-              className="max-h-[72vh] w-full select-none object-contain"
+              className="max-h-[72vh] w-full rounded-lg object-contain"
             />
           </div>
 
-          <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <button onClick={() => go(-1)} disabled={page === 1} className="btn-ghost h-10 justify-self-start text-sm">
-              ← Önceki
+          {/* Kontroller */}
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button onClick={() => go(-1)} disabled={page === 1} className="btn-secondary h-9 w-9 p-0">
+              <IconArrowLeft width={17} height={17} />
             </button>
-            <span className="rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-black text-accent-dark">
+            <span className="min-w-[72px] text-center text-sm font-semibold tabular-nums text-subtle">
               {pageLabel}
             </span>
-            <button
-              onClick={() => go(1)}
-              disabled={page === total}
-              className="btn-ghost h-10 justify-self-end text-sm"
-            >
-              Sonraki →
+            <button onClick={() => go(1)} disabled={page === total} className="btn-secondary h-9 w-9 p-0">
+              <IconArrowRight width={17} height={17} />
             </button>
           </div>
         </div>
@@ -137,13 +143,13 @@ export function TrainingViewerPage() {
       {/* Tam ekran katmanı */}
       <div
         ref={fsContainerRef}
-        className={`fixed inset-0 z-[9999] bg-white ${isFullscreen ? 'flex' : 'hidden'} items-center justify-center`}
+        className={`fixed inset-0 z-[9999] bg-black ${isFullscreen ? 'flex' : 'hidden'} items-center justify-center`}
       >
         <div ref={fsSwipeRef} className="grid h-full w-full touch-pan-y place-items-center">
           {current && (
             <img
               src={current.image_url}
-              alt={`${data.title} - Sayfa ${page}`}
+              alt={`${data.title} — Sayfa ${page}`}
               draggable={false}
               className="h-full w-full select-none object-contain"
             />
@@ -151,12 +157,12 @@ export function TrainingViewerPage() {
         </div>
         <button
           onClick={exit}
-          className="fixed bottom-3 right-3 z-[10010] grid h-12 w-12 place-items-center rounded-full border border-accent/20 bg-white/90 text-2xl font-black text-accent-dark shadow"
-          aria-label="Tam ekranı kapat"
+          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20"
+          aria-label="Kapat"
         >
-          ×
+          <IconX width={20} height={20} />
         </button>
-        <div className="fixed bottom-3 left-1/2 z-[10010] -translate-x-1/2 rounded-full border border-accent/20 bg-white/85 px-4 py-1.5 text-sm font-black text-accent-dark">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3.5 py-1.5 text-sm font-semibold tabular-nums text-white backdrop-blur">
           {pageLabel}
         </div>
       </div>
