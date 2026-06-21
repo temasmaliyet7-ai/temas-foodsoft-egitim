@@ -1,0 +1,35 @@
+# Render.com Blueprint — backend (Node + Fastify API)
+# Render Dashboard → New → Blueprint → bu repoyu seç → otomatik okur.
+# Sonra "sync: false" olan değişkenleri (gizli) Dashboard'da elle gir.
+services:
+  - type: web
+    name: temas-foodsoft-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_STORAGE_BUCKET
+        value: training-pages
+      - key: ACCESS_TOKEN_TTL
+        value: 15m
+      - key: REFRESH_TOKEN_TTL_DAYS
+        value: "7"
+      # Gizli/duruma özel — Render Dashboard'da elle doldurulacak:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
+      # Güçlü sırlar — Render otomatik üretsin:
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: COOKIE_SECRET
+        generateValue: true
